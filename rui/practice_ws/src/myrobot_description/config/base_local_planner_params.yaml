@@ -1,0 +1,38 @@
+TrajectoryPlannerROS:
+  holonomic_robot: true
+  meter_scoring: true
+
+  max_vel_x: 0.22
+  min_vel_x: -0.10
+  max_vel_y: 0.16
+  min_vel_y: -0.16
+  # move_base only translates. The waypoint navigator rotates after stopping.
+  max_vel_theta: 0.0
+  min_in_place_vel_theta: 0.0
+  min_vel_theta: 0.0
+
+  acc_lim_x: 0.60
+  acc_lim_y: 0.60
+  acc_lim_theta: 1.00
+
+  escape_vel: -0.08
+  y_vels: [-0.16, -0.08, 0.0, 0.08, 0.16]
+
+  xy_goal_tolerance: 0.18
+  yaw_goal_tolerance: 3.1416
+  latch_xy_goal_tolerance: true
+
+  sim_time: 1.5
+  sim_granularity: 0.025
+  angular_sim_granularity: 0.05
+  vx_samples: 8
+  vtheta_samples: 1
+
+  path_distance_bias: 0.70
+  goal_distance_bias: 0.90
+  occdist_scale: 0.04
+  heading_lookahead: 0.325
+  dwa: false
+
+  oscillation_reset_dist: 0.08
+  prune_plan: true

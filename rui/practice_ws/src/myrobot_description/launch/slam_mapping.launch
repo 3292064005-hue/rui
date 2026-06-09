@@ -1,0 +1,98 @@
+<launch>
+    <!--
+      SLAM mapping launch file.
+      It does not modify worlds/rm_map.world. Gazebo loads the original map, gmapping builds /map from /scan + /odom.
+    -->
+    <arg name="launch_rviz" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="paused" default="false" />
+    <arg name="autonomous_mapping" default="true" />
+    <arg name="record_trajectory" default="true" />
+    <arg name="enable_slam_monitor" default="true" />
+
+    <arg name="params" default="$(find myrobot_description)/config/task_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
+    <arg name="slam_params" default="$(find myrobot_description)/config/slam_gmapping_params.yaml" />
+    <arg name="rviz_config" default="$(find myrobot_description)/config/slam.rviz" />
+
+    <arg name="scan_topic" default="/scan_filtered" />
+    <arg name="raw_scan_topic" default="/scan" />
+    <arg name="map_topic" default="/map" />
+    <arg name="base_frame" default="base_footprint" />
+    <arg name="odom_frame" default="odom" />
+    <arg name="map_frame" default="map" />
+
+    <include file="$(find myrobot_description)/launch/mycar_gazebo.launch">
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="launch_rviz" value="$(arg launch_rviz)" />
+        <arg name="rviz_config" value="$(arg rviz_config)" />
+        <arg name="publish_fake_joint_states" value="false" />
+        <arg name="enable_planar_drive" value="true" />
+        <arg name="enable_lidar" value="true" />
+        <arg name="enable_camera" value="true" />
+        <arg name="enable_imu" value="true" />
+        <arg name="start_wheel_joint_driver" value="true" />
+        <arg name="start_sim_monitor" value="false" />
+    </include>
+
+    <node pkg="myrobot_description"
+          type="scan_self_filter.py"
+          name="scan_self_filter"
+          output="screen">
+        <param name="input_scan_topic" value="$(arg raw_scan_topic)" />
+        <param name="output_scan_topic" value="$(arg scan_topic)" />
+        <param name="min_valid_range" value="0.18" />
+    </node>
+
+    <node pkg="gmapping"
+          type="slam_gmapping"
+          name="slam_gmapping"
+          output="screen">
+        <remap from="scan" to="$(arg scan_topic)" />
+        <rosparam command="load" file="$(arg slam_params)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(arg enable_slam_monitor)"
+          pkg="myrobot_description"
+          type="slam_status_monitor.py"
+          name="slam_status_monitor"
+          output="screen">
+        <param name="map_topic" value="$(arg map_topic)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="status_topic" value="/slam_status" />
+    </node>
+
+    <node if="$(arg record_trajectory)"
+          pkg="myrobot_description"
+          type="task_evidence_recorder.py"
+          name="slam_evidence_recorder"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="visualization_frame" value="$(arg odom_frame)" />
+        <param name="patrol_status_topic" value="/navigation_status" />
+        <param name="trajectory_topic" value="/task_trajectory" />
+        <param name="task_marker_topic" value="/task_markers" />
+    </node>
+
+    <!-- Follow the user-defined navigation route while gmapping builds the first map. -->
+    <node if="$(arg autonomous_mapping)"
+          pkg="myrobot_description"
+          type="move_base_waypoint_navigator.py"
+          name="slam_autonomous_patrol"
+          output="screen">
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="navigation_use_direct_path" value="true" />
+        <param name="navigation_use_holonomic_path_follower" value="true" />
+        <param name="navigation_goal_frame" value="$(arg odom_frame)" />
+        <param name="navigation_control_frame" value="$(arg odom_frame)" />
+        <param name="navigation_clear_costmaps_on_retry" value="false" />
+        <param name="navigation_stop_on_failure" value="true" />
+        <param name="navigation_status_topic" value="/navigation_status" />
+        <param name="patrol_status_topic" value="/navigation_status" />
+    </node>
+</launch>

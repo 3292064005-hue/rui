@@ -1,0 +1,87 @@
+# Task parameters for the 5 m x 4 m RAICOM scouting map.
+# The default world now contains visual-only image panels for the recognition task.
+
+model_name: mycar
+cmd_vel_topic: /cmd_vel
+odom_topic: /odom
+patrol_status_topic: /patrol_status
+control_rate: 20.0
+odom_timeout: 8.0
+
+# Holonomic/mecanum patrol controller parameters.
+goal_tolerance: 0.08
+yaw_tolerance: 0.20
+position_gain: 0.90
+yaw_gain: 1.60
+max_linear_speed: 0.20
+max_lateral_speed: 0.16
+max_angular_speed: 0.90
+face_path: false
+loop: false
+stop_at_end: true
+
+# Corridor-following waypoints for the existing rm_map.world.
+# Keep the patrol on corridor center lines; patrol_navigator.py does not plan around walls.
+waypoints:
+  - {name: 1,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 2,       x: 0.00, y:  -4.5, yaw: -1.5708, hold: 0.5}
+  - {name: 3,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 4,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 5,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 6,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 7,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 8,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 9,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 10,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 11,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 12,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 13,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 14,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 15,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 16,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 17,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 18,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 19,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: 20,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+
+# Recognition-zone trigger and expected values.
+# The recognizer now counts the target cards from /camera/image_raw. enemy / friendly / hostage
+# remain as acceptance baselines so the published JSON can include the expected counts.
+zones:
+  - name: zone_1
+    center_x: 0.55
+    center_y: -2.45
+    radius: 0.35
+    enemy: 1
+    friendly: 1
+    hostage: 0
+  - name: zone_2
+    center_x: 4.45
+    center_y: -1.55
+    radius: 0.35
+    enemy: 2
+    friendly: 0
+    hostage: 1
+
+recognition_topic: /recognition_result
+recognition_summary_topic: /recognition_summary
+report_once: true
+use_camera_image_detection: true
+image_topic: /camera/image_raw
+template_dir: ""
+image_timeout: 1.5
+camera_crop: [0.02, 0.98, 0.00, 0.78]
+min_card_area_px: 900
+orb_match_threshold: 12
+template_match_threshold: 0.68
+recognition_capture_delay: 0.45
+allow_expected_count_fallback: false
+
+# Evidence recorder / RViz overlay settings.
+# Log files are written outside the package so catkin clean will not delete them.
+log_dir: ~/.ros/myrobot_description_logs
+task_marker_topic: /task_markers
+trajectory_topic: /task_trajectory
+visualization_frame: odom
+trajectory_sample_period: 0.20
+publish_task_markers: true

@@ -1,0 +1,12 @@
+<launch>
+    <!-- Start only the sequential move_base goal sender. Use after navigation.launch is already running. -->
+    <arg name="params" default="$(find myrobot_description)/config/task_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
+    <node pkg="myrobot_description"
+          type="move_base_waypoint_navigator.py"
+          name="move_base_waypoint_navigator"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+    </node>
+</launch>

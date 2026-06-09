@@ -1,0 +1,45 @@
+material RAICOM/Zone1Panel
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      ambient 1 1 1 1
+      diffuse 1 1 1 1
+      specular 0 0 0 1
+      emissive 1 1 1 1
+      cull_hardware none
+      cull_software none
+      texture_unit
+      {
+        texture zone1_panel.jpg
+        filtering anisotropic
+        max_anisotropy 16
+      }
+    }
+  }
+}
+
+material RAICOM/Zone2Panel
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      ambient 1 1 1 1
+      diffuse 1 1 1 1
+      specular 0 0 0 1
+      emissive 1 1 1 1
+      cull_hardware none
+      cull_software none
+      texture_unit
+      {
+        texture zone2_panel.jpg
+        filtering anisotropic
+        max_anisotropy 16
+      }
+    }
+  }
+}

@@ -1,0 +1,476 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <world name='rm_5x4_start_behind_world'>
+    <gravity>0 0 -9.80665</gravity>
+    <physics name='ode_physics' default='1' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <model name='rm_5x4_start_behind_map'>
+      <static>true</static>
+      <link name='map_link'>
+
+        <collision name='floor_white_collision'>
+          <pose>2.250000 -1.750000 0.010000 0 0 0</pose>
+          <geometry>
+            <box><size>5.000000 4.000000 0.020000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='floor_white_visual'>
+          <pose>2.250000 -1.750000 0.010000 0 0 0</pose>
+          <geometry>
+            <box><size>5.000000 4.000000 0.020000</size></box>
+          </geometry>
+          <material>
+            <ambient>1.000 1.000 1.000 1.000</ambient>
+            <diffuse>1.000 1.000 1.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>1.000 1.000 1.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='outer_wall_bottom_collision'>
+          <pose>2.250000 -3.775000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>5.100000 0.050000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='outer_wall_bottom_visual'>
+          <pose>2.250000 -3.775000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>5.100000 0.050000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='outer_wall_top_collision'>
+          <pose>2.250000 0.275000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>5.100000 0.050000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='outer_wall_top_visual'>
+          <pose>2.250000 0.275000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>5.100000 0.050000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='outer_wall_left_collision'>
+          <pose>-0.275000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 4.000000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='outer_wall_left_visual'>
+          <pose>-0.275000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 4.000000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='outer_wall_right_collision'>
+          <pose>4.775000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 4.000000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='outer_wall_right_visual'>
+          <pose>4.775000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 4.000000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='inner_wall_left_collision'>
+          <pose>0.250000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 3.000000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='inner_wall_left_visual'>
+          <pose>0.250000 -1.750000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>0.050000 3.000000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='inner_wall_top_collision'>
+          <pose>2.250000 -0.250000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>4.000000 0.050000 0.300000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='inner_wall_top_visual'>
+          <pose>2.250000 -0.250000 0.170000 0 0 0</pose>
+          <geometry>
+            <box><size>4.000000 0.050000 0.300000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='left_obstacle_top_collision'>
+          <pose>1.742500 -1.242500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>1.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='left_obstacle_top_visual'>
+          <pose>1.742500 -1.242500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>1.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='left_obstacle_mid_upper_collision'>
+          <pose>1.242500 -2.025000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.580000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='left_obstacle_mid_upper_visual'>
+          <pose>1.242500 -2.025000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.580000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='left_obstacle_mid_back_collision'>
+          <pose>1.542500 -2.540000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.385000 0.450000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='left_obstacle_mid_back_visual'>
+          <pose>1.542500 -2.540000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.385000 0.450000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='left_obstacle_bottom_collision'>
+          <pose>1.242500 -3.257500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='left_obstacle_bottom_visual'>
+          <pose>1.242500 -3.257500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='right_obstacle_top_collision'>
+          <pose>3.757500 -0.742500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_obstacle_top_visual'>
+          <pose>3.757500 -0.742500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='right_obstacle_mid_upper_collision'>
+          <pose>3.757500 -1.317500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.165000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_obstacle_mid_upper_visual'>
+          <pose>3.757500 -1.317500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.165000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='right_obstacle_mid_back_collision'>
+          <pose>3.457500 -1.625000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.385000 0.450000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_obstacle_mid_back_visual'>
+          <pose>3.457500 -1.625000 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.385000 0.450000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='right_obstacle_mid_lower_collision'>
+          <pose>3.757500 -2.057500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.415000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_obstacle_mid_lower_visual'>
+          <pose>3.757500 -2.057500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>0.985000 0.415000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <collision name='right_obstacle_bottom_collision'>
+          <pose>3.257500 -2.757500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>1.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_obstacle_bottom_visual'>
+          <pose>3.257500 -2.757500 0.145000 0 0 0</pose>
+          <geometry>
+            <box><size>1.985000 0.985000 0.250000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.000 0.000 1.000</ambient>
+            <diffuse>0.000 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <visual name='green_start_line_visual'>
+          <pose>0.000000 -0.250000 0.023000 0 0 0</pose>
+          <geometry>
+            <box><size>0.500000 0.040000 0.004000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.000 0.800 0.000 1.000</ambient>
+            <diffuse>0.000 0.800 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.000 0.800 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <visual name='red_finish_line_visual'>
+          <pose>0.250000 0.000000 0.023000 0 0 0</pose>
+          <geometry>
+            <box><size>0.040000 0.500000 0.004000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.900 0.000 0.000 1.000</ambient>
+            <diffuse>0.900 0.000 0.000 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.900 0.000 0.000 1.000</emissive>
+          </material>
+        </visual>
+
+        <!-- Visual-only recognition panels for the RAICOM task.
+             They do not have collision geometry, so SLAM and navigation keep the same walkable map. -->
+        <visual name='zone1_recognition_panel'>
+          <pose>1.20 -2.550000 0.2 0 0 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box><size>0.010000 0.380000 0.45</size></box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://materials/scripts</uri>
+              <uri>file://materials/textures</uri>
+              <name>RAICOM/Zone1Panel</name>
+            </script>
+          </material>
+        </visual>
+
+        <visual name='zone2_recognition_panel'>
+          <pose>3.90000 -1.65000 0.2 0 0 1.57079632679</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box><size>0.380000 0.010000 0.45</size></box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://materials/scripts</uri>
+              <uri>file://materials/textures</uri>
+              <name>RAICOM/Zone2Panel</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <scene>
+      <ambient>0.85 0.85 0.85 1</ambient>
+      <background>0.70 0.70 0.70 1</background>
+      <shadows>false</shadows>
+    </scene>
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>2.25 -1.75 6.5 0 1.570796 0</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+  </world>
+</sdf>

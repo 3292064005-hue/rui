@@ -1,0 +1,53 @@
+<launch>
+    <!--
+      Full autonomous task using the ROS navigation stack:
+      map_server + AMCL + move_base + sequential navigation goals + recognition + evidence logs.
+    -->
+    <arg name="map_file" default="$(find myrobot_description)/maps/raicom_known_map.yaml" />
+    <arg name="params" default="$(find myrobot_description)/config/task_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
+    <arg name="launch_rviz" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="paused" default="false" />
+    <arg name="start_goals" default="true" />
+    <arg name="start_recognition" default="true" />
+    <arg name="record_evidence" default="true" />
+
+    <include file="$(find myrobot_description)/launch/navigation.launch">
+        <arg name="map_file" value="$(arg map_file)" />
+        <arg name="launch_rviz" value="$(arg launch_rviz)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+    </include>
+
+    <node if="$(arg start_recognition)"
+          pkg="myrobot_description"
+          type="battlefield_recognition.py"
+          name="battlefield_recognition_navigation"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+    </node>
+
+    <node if="$(arg record_evidence)"
+          pkg="myrobot_description"
+          type="task_evidence_recorder.py"
+          name="navigation_evidence_recorder"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="visualization_frame" value="map" />
+        <param name="patrol_status_topic" value="/navigation_status" />
+        <param name="trajectory_topic" value="/task_trajectory" />
+        <param name="task_marker_topic" value="/task_markers" />
+    </node>
+
+    <node if="$(arg start_goals)"
+          pkg="myrobot_description"
+          type="move_base_waypoint_navigator.py"
+          name="move_base_waypoint_navigator"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+    </node>
+</launch>

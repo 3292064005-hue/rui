@@ -1,0 +1,32 @@
+<launch>
+    <!-- RViz model display launch file. Set gui:=false to use joint_state_publisher without sliders. -->
+    <arg name="gui" default="true" />
+    <arg name="launch_rviz" default="true" />
+    <arg name="rviz_config" default="$(find myrobot_description)/config/model.rviz" />
+
+    <param name="robot_description"
+           command="$(find xacro)/xacro $(find myrobot_description)/urdf/turtlebot3_mecanum.urdf.xacro" />
+
+    <node if="$(arg gui)"
+          pkg="joint_state_publisher_gui"
+          type="joint_state_publisher_gui"
+          name="joint_state_publisher_gui"
+          output="screen" />
+
+    <node unless="$(arg gui)"
+          pkg="joint_state_publisher"
+          type="joint_state_publisher"
+          name="joint_state_publisher"
+          output="screen" />
+
+    <node pkg="robot_state_publisher"
+          type="robot_state_publisher"
+          name="robot_state_publisher"
+          output="screen" />
+
+    <node if="$(arg launch_rviz)"
+          pkg="rviz"
+          type="rviz"
+          name="rviz"
+          args="-d $(arg rviz_config)" />
+</launch>

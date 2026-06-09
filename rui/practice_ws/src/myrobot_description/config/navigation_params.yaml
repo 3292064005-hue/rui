@@ -1,0 +1,54 @@
+# Autonomous map-based navigation parameters.
+# Frame coordinates are in the same map/world coordinate system as maps/raicom_known_map.yaml.
+move_base_action: /move_base
+navigation_status_topic: /navigation_status
+patrol_status_topic: /navigation_status
+navigation_goal_frame: map
+navigation_goal_timeout: 90.0
+navigation_server_timeout: 30.0
+navigation_startup_stabilization_delay: 2.0
+navigation_retry_count: 1
+navigation_clear_costmaps_on_retry: true
+navigation_stop_on_failure: false
+navigation_hold_at_goal: 0.8
+navigation_base_frame: base_footprint
+navigation_control_frame: odom
+navigation_separate_rotation: true
+navigation_rotation_rate: 20.0
+navigation_rotation_gain: 1.8
+navigation_rotation_max_speed: 0.65
+navigation_rotation_min_speed: 0.12
+navigation_rotation_tolerance: 0.08
+navigation_rotation_timeout: 20.0
+navigation_stop_duration: 0.35
+navigation_use_holonomic_path_follower: true
+# slam_mapping.launch overrides this to true so the same points can be driven
+# before a static map and move_base planning service exist.
+navigation_use_direct_path: false
+navigation_make_plan_service: /move_base/make_plan
+navigation_translation_rate: 20.0
+navigation_translation_tolerance: 0.04
+navigation_arrival_stable_cycles: 6
+navigation_translation_gain: 1.0
+navigation_translation_max_forward_speed: 0.20
+navigation_translation_max_lateral_speed: 0.16
+navigation_path_lookahead: 0.22
+navigation_replan_interval: 1.0
+navigation_stuck_timeout: 8.0
+navigation_progress_distance: 0.01
+
+# Corridor-following goals for move_base. Keep intermediate points aligned with the legal corridor center lines.
+navigation_goals:
+  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
+  - {name: zone_1_entry,   x: 0.52, y: -3.50, yaw:  0.0000, hold: 0.1}
+  - {name: zone_1,        x: 0.52, y: -2.55, yaw:  0.0000, hold: 0.5}
+  - {name: left_top_out,  x: 0.52, y: -0.58, yaw:  0.0, hold: 0.1}
+  - {name: top_return,    x: 3.00, y: -0.58, yaw:  -1.5708, hold: 0.1}
+  - {name: right_wall_exit,x: 3.00, y: -2.00, yaw:  -3.1416, hold: 0.1}
+  - {name: right     ,   x: 2.00, y: -2.00, yaw:  -1.5708, hold: 0.1}
+  - {name: right_wall_return,x: 2.00, y: -3.50, yaw:  0.0, hold: 0.1}
+  - {name: left_wall_return,x: 4.45, y: -3.50, yaw:  1.5708, hold: 0.1}
+  - {name: zone_2,        x: 4.45, y: -1.65, yaw: 3.1416, hold: 0.5}
+  - {name: right_top_out, x: 4.45, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: top_return,    x: 2.20, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: finish,        x: 0.3, y: -0.08, yaw:  3.1416, hold: 0.1}

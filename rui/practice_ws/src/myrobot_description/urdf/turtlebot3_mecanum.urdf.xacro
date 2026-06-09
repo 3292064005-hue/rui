@@ -1,0 +1,336 @@
+<?xml version="1.0" ?>
+<robot name="turtlebot3_mecanum" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="enable_planar_drive" default="true"/>
+  <xacro:arg name="enable_lidar" default="true"/>
+  <xacro:arg name="enable_camera" default="true"/>
+  <xacro:arg name="enable_imu" default="true"/>
+  <xacro:include filename="$(find myrobot_description)/urdf/common_properties.xacro"/>
+  <xacro:include filename="$(find myrobot_description)/urdf/camera.xacro"/>
+
+
+  <link name="base_footprint"/>
+
+	<joint name="base_joint" type="fixed">
+		<parent link="base_footprint"/>
+		<child link="base_link"/>
+		<origin xyz="0.0 0.0 0.053136" rpy="0 0 0"/>
+	</joint>
+
+	<link name="base_link">
+   		<visual>
+			<origin xyz="0.0355 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/bases/base_link.STL" /> 
+			</geometry>
+			<material name="light_black">
+				<color rgba="0.3 0.1 0.3 1" />
+			</material>
+   		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/bases/base_link.STL" />
+			</geometry>
+		</collision>
+
+		<inertial>
+			<origin xyz="0 0.055998 0.019157" rpy="0 0 0" />
+			<mass value="1.6718"/>
+	 		<inertia
+	 			ixx="0.01" ixy="0" ixz="0"
+				iyy="0.01" iyz="0"
+				izz="0.01" />
+		</inertial>
+	</link>
+
+<joint name="wheel_right_rear_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="wheel_right_rear"/>
+		<origin xyz="-0.05647 -0.085 -0.02325" rpy="-1.57 0 0"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	
+ 	<link name="wheel_right_rear">
+   		<visual>
+			<origin xyz="0 0 -0.009" rpy="0 1.57 0"/>
+   			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_right_rear.STL" />
+			</geometry>
+   			<material name="dark">
+				<color rgba="0.2 0.2 0.2 1"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_right_rear.STL" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin xyz="-0.1005 0.085 0" rpy="0 0 0" />
+			<mass value="0.31944"/>
+	 		<inertia
+	 			ixx="0.01" ixy="0" ixz="0"
+				iyy="0.01" iyz="0"
+				izz="0.01" />
+		</inertial>
+ 	</link>
+
+<joint name="wheel_left_rear_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="wheel_left_rear"/>
+		<origin xyz="-0.05647 0.085 -0.02325" rpy="-1.57 0 0"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+ 	<link name="wheel_left_rear">
+   		<visual>
+			<origin xyz="0 0 0.009" rpy="0 1.57 0 "/>
+   			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_left_rear.STL" />
+			</geometry>
+   			<material name="Rubber">
+				<color rgba="0.2 0.2 0.2 1"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_left_rear.STL" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin xyz="-0.1005 0.085 0" rpy="0 0 0" />
+			<mass value="0.31944"/>
+	 		<inertia
+	 			ixx="0.01" ixy="0" ixz="0"
+				iyy="0.01" iyz="0"
+				izz="0.01" />
+		</inertial>
+ 	</link>
+
+
+<joint name="wheel_right_front_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="wheel_right_front"/>
+		<origin xyz="0.071132 -0.085 -0.02325" rpy="-1.57 0 0"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+	<link name="wheel_right_front">
+   		<visual>
+			<origin xyz="0 0 -0.009" rpy="0 1.57 0"/>
+   			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_right_front.STL" />
+			</geometry>
+   			<material name="Rubber">
+				<color rgba="0.2 0.2 0.2 1"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_right_front.STL" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin xyz="0.1005 0 0" rpy="0 0 0" />
+			<mass value="0.31944"/>
+	 		<inertia
+	 			ixx="0.01" ixy="0" ixz="0"
+				iyy="0.01" iyz="0"
+				izz="0.01" />
+		</inertial>
+ 	</link>
+
+<joint name="wheel_left_front_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="wheel_left_front"/>
+		<origin xyz="0.071132 0.085 -0.02325" rpy="-1.57 0 0"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+
+	<link name="wheel_left_front">
+   		<visual>
+			<origin xyz="0 0 0.009" rpy="0 1.57 0"/>
+   			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_left_front.STL" />
+			</geometry>
+   			<material name="Rubber">
+				<color rgba="0.2 0.2 0.2 1"/>
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<mesh filename="package://myrobot_description/meshes/wheels/wheel_left_front.STL" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin xyz="0.1005 0 0" rpy="0 0 0" />
+			<mass value="0.31944"/>
+	 		<inertia
+	 			ixx="0.01" ixy="0" ixz="0"
+				iyy="0.01" iyz="0"
+				izz="0.01" />
+		</inertial>
+ 	</link>
+
+<joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="imu_link"/>
+
+<joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <origin xyz="0.005 0 0.047" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_scan">
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://myrobot_description/meshes/bases/lds.STL" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark">
+        <color rgba="0.15 0.15 0.15 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0.015 0 -0.0065" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.0315" radius="0.055"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.114" />
+      <origin xyz="0 0 0" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+               iyy="0.001" iyz="0.0"
+               izz="0.001" />
+    </inertial>
+  </link>
+  <!-- Gazebo visual/material/contact tuning. -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Black</material>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+
+  <gazebo reference="wheel_right_rear">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>100000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+  <gazebo reference="wheel_left_rear">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>100000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+  <gazebo reference="wheel_right_front">
+    <material>Gazebo/Blue</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>100000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+  <gazebo reference="wheel_left_front">
+    <material>Gazebo/Blue</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>100000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+  <xacro:if value="$(arg enable_lidar)">
+  <gazebo reference="base_scan">
+    <material>Gazebo/Black</material>
+    <sensor name="base_scan_sensor" type="ray">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.1415926</min_angle>
+            <max_angle>3.1415926</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.12</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>base_scan</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+  </xacro:if>
+
+  <xacro:if value="$(arg enable_imu)">
+  <gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>100</update_rate>
+      <plugin name="imu_controller" filename="libgazebo_ros_imu_sensor.so">
+        <topicName>/imu/data</topicName>
+        <frameName>imu_link</frameName>
+        <updateRateHZ>100.0</updateRateHZ>
+        <gaussianNoise>0.0002</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+      </plugin>
+    </sensor>
+  </gazebo>
+  </xacro:if>
+
+  <xacro:if value="$(arg enable_planar_drive)">
+  <!--
+    Gazebo holonomic/mecanum base drive.
+    It subscribes to /cmd_vel and publishes /odom plus odom -> base_footprint TF.
+    Wheel joint rotation is published by scripts/mecanum_sim_driver.py.
+  -->
+  <gazebo>
+    <plugin name="mecanum_planar_drive" filename="libgazebo_ros_planar_move.so">
+      <robotNamespace>/</robotNamespace>
+      <bodyName>base_link</bodyName>
+      <commandTopic>cmd_vel</commandTopic>
+      <cmdTimeout>0.5</cmdTimeout>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+      <odometryRate>50.0</odometryRate>
+      <publishOdometryTf>true</publishOdometryTf>
+    </plugin>
+  </gazebo>
+  </xacro:if>
+
+</robot>

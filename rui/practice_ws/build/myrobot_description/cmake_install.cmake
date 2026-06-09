@@ -85,6 +85,10 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/myrobot_description" TYPE PROGRAM FILES "/root/workspace/rui/rui/practice_ws/build/myrobot_description/catkin_generated/installspace/odom_laser_mapper.py")
+endif()
+
+if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/myrobot_description" TYPE PROGRAM FILES "/root/workspace/rui/rui/practice_ws/build/myrobot_description/catkin_generated/installspace/navigation_status_monitor.py")
 endif()
 

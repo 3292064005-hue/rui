@@ -9,6 +9,7 @@
     <arg name="autonomous_mapping" default="true" />
     <arg name="record_trajectory" default="true" />
     <arg name="enable_slam_monitor" default="true" />
+    <arg name="mapping_backend" default="odom_laser" />
 
     <arg name="params" default="$(find myrobot_description)/config/task_params.yaml" />
     <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
@@ -45,7 +46,8 @@
         <param name="min_valid_range" value="0.18" />
     </node>
 
-    <node pkg="gmapping"
+    <node if="$(eval arg('mapping_backend') == 'gmapping')"
+          pkg="gmapping"
           type="slam_gmapping"
           name="slam_gmapping"
           output="screen">
@@ -54,6 +56,25 @@
         <param name="base_frame" value="$(arg base_frame)" />
         <param name="odom_frame" value="$(arg odom_frame)" />
         <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'odom_laser')"
+          pkg="myrobot_description"
+          type="odom_laser_mapper.py"
+          name="odom_laser_mapper"
+          output="screen">
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="map_topic" value="$(arg map_topic)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="resolution" value="0.02" />
+        <param name="xmin" value="-0.50" />
+        <param name="ymin" value="-4.00" />
+        <param name="xmax" value="5.00" />
+        <param name="ymax" value="0.50" />
+        <param name="max_usable_range" value="6.0" />
+        <param name="occupied_threshold" value="1.0" />
+        <param name="min_component_cells" value="8" />
     </node>
 
     <node if="$(arg enable_slam_monitor)"

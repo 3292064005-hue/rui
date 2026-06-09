@@ -51,7 +51,7 @@ roslaunch myrobot_description slam_mapping.launch
 2. 机器人模型和仿真驱动；
 3. `/scan` 激光雷达；
 4. `/odom` 里程计；
-5. `slam_gmapping`；
+5. 默认 `odom_laser_mapper`（可选 `slam_gmapping`）；
 6. RViz 建图显示；
 7. 自动巡点节点；
 8. SLAM 状态监控。
@@ -59,6 +59,14 @@ roslaunch myrobot_description slam_mapping.launch
 自动建图直接读取 `config/navigation_params.yaml` 中的
 `navigation_goals`。此时尚无静态地图，因此节点使用 `odom` 坐标逐点
 平移，到点停稳后原地旋转，不依赖 `move_base` 或 `/move_base/make_plan`。
+
+默认 `mapping_backend:=odom_laser` 使用 Gazebo 里程计和激光构建固定
+5m x 4m 栅格，避免重复走廊造成 gmapping 假闭环。需要对比传统
+gmapping 时可执行：
+
+```bash
+roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
+```
 
 ---
 
@@ -101,6 +109,15 @@ roslaunch myrobot_description save_slam_map.launch
 ```text
 ~/myrobot_description_maps/raicom_slam_map.pgm
 ~/myrobot_description_maps/raicom_slam_map.yaml
+```
+
+本次完整 13 点扫描并清理孤立噪点后的验收地图同时保存在：
+
+```text
+~/myrobot_description_maps/raicom_slam_map_final.pgm
+~/myrobot_description_maps/raicom_slam_map_final.yaml
+src/myrobot_description/maps/raicom_slam_map_final.pgm
+src/myrobot_description/maps/raicom_slam_map_final.yaml
 ```
 
 指定保存目录和名称：

@@ -37,6 +37,7 @@ catkin_install_python(PROGRAMS
   scripts/save_slam_map.py
   scripts/slam_status_monitor.py
   scripts/scan_self_filter.py
+  scripts/odom_laser_mapper.py
   scripts/navigation_status_monitor.py
   scripts/navigation_initializer.py
   scripts/move_base_waypoint_navigator.py

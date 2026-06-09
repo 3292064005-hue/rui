@@ -1,2 +1,0 @@
-myrobot_description
--DCATKIN_DEVEL_PREFIX=/root/workspace/rui/rui/practice_ws/devel -DCMAKE_INSTALL_PREFIX=/root/workspace/rui/rui/practice_ws/install -G Unix Makefiles

@@ -1,0 +1,16 @@
+# ROS/catkin generated outputs
+rui/practice_ws/build/
+rui/practice_ws/devel/
+rui/practice_ws/install/
+rui/practice_ws/log/
+rui/practice_ws/logs/
+rui/practice_ws/.catkin_tools/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*~

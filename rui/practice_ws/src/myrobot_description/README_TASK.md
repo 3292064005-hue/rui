@@ -109,10 +109,10 @@ config/task_params.yaml
 
 ```yaml
 waypoints:
-  - {name: start,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: zone_1,      x: 0.55, y: -2.45, yaw:  0.0000, hold: 2.0}
-  - {name: zone_2,      x: 4.45, y: -1.55, yaw: -1.5708, hold: 2.0}
-  - {name: finish,      x: 0.00, y:  0.00, yaw:  3.1416, hold: 1.0}
+  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
+  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
+  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
+  - {name: finish,         x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
 ```
 
 字段说明：
@@ -129,8 +129,8 @@ waypoints:
 ```yaml
 zones:
   - name: zone_1
-    center_x: 0.55
-    center_y: -2.45
+    center_x: 0.52
+    center_y: -2.55
     radius: 0.35
     enemy: 1
     friendly: 1
@@ -158,6 +158,25 @@ zones:
 ```
 
 `task_params.yaml` 中的 `enemy / friendly / hostage` 现在作为验收期望值保留，识别结果来自真实图像检测，不再直接由配置生成。
+
+### 6.1 可选 ONNX 权重
+
+将分类模型放入：
+
+```text
+recognition_weights/soldier_classifier.onnx
+```
+
+然后设置：
+
+```yaml
+recognition_backend: auto
+recognition_weights: recognition_weights/soldier_classifier.onnx
+recognition_model_labels: [enemy, friendly, hostage]
+```
+
+模型不存在时 `auto` 自动回退模板。正式验收时可使用
+`recognition_backend: onnx` 强制检查权重。
 
 ---
 

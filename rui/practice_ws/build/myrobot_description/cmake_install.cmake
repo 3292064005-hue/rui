@@ -126,6 +126,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
     "/root/workspace/rui/rui/practice_ws/src/myrobot_description/maps"
     "/root/workspace/rui/rui/practice_ws/src/myrobot_description/materials"
     "/root/workspace/rui/rui/practice_ws/src/myrobot_description/recognition_templates"
+    "/root/workspace/rui/rui/practice_ws/src/myrobot_description/recognition_weights"
     )
 endif()
 

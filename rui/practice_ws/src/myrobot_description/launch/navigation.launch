@@ -4,7 +4,7 @@
       Gazebo original world + map_server + AMCL + move_base.
       worlds/rm_map.world is not modified. The default map is generated from that world geometry.
     -->
-    <arg name="map_file" default="$(find myrobot_description)/maps/raicom_known_map.yaml" />
+    <arg name="map_file" default="$(find myrobot_description)/maps/raicom_slam_map_final.yaml" />
     <arg name="world_name" default="$(find myrobot_description)/worlds/rm_map.world" />
     <arg name="launch_rviz" default="true" />
     <arg name="gui" default="true" />

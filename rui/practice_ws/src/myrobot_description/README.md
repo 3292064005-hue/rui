@@ -11,17 +11,17 @@
 | 模块 | 状态 | 说明 |
 |---|---:|---|
 | 机器人模型 | 已完成 | 麦克纳姆轮底盘、雷达、相机、IMU 坐标系 |
-| Gazebo 世界加载 | 已完成 | 使用原始 `worlds/rm_map.world` |
+| Gazebo 世界加载 | 已完成 | 场地含两块无碰撞视觉识别面板 |
 | 底盘仿真驱动 | 已完成 | `/cmd_vel` 控制 Gazebo 中的平面运动 |
 | 轮子仿真 | 已完成 | 根据 `/cmd_vel` 逆解四轮速度并发布 `/joint_states` |
 | 激光雷达 | 已完成 | 发布 `/scan` |
 | 相机 | 已完成 | 发布 `/camera/image_raw` 和 `/camera/camera_info` |
 | IMU | 已完成 | 发布 `/imu/data` |
-| SLAM 建图 | 已完成 | `slam_gmapping` 输出 `/map` |
+| SLAM 建图 | 已完成 | 默认固定边界里程计激光建图，可选 gmapping |
 | 地图保存 | 已完成 | 保存 `.pgm` 和 `.yaml` |
 | 自主导航 | 已完成 | `map_server + AMCL + move_base` |
 | 自动巡点 | 已完成 | 默认使用 `move_base` 顺序执行导航目标点 |
-| 识别结果输出 | 已完成 | 按识别区配置输出敌军、友军、人质数量 |
+| 识别结果输出 | 已完成 | 模板识别，预留 ONNX 权重分类接口 |
 | 证据记录 | 已完成 | 保存轨迹、识别结果、任务状态和总结 |
 
 ---
@@ -61,13 +61,17 @@ myrobot_description/
 │   ├── local_costmap_params.yaml      # 局部代价地图参数
 │   └── *.rviz                         # RViz 显示配置
 ├── maps/
-│   ├── raicom_known_map.pgm           # 默认导航地图
+│   ├── raicom_slam_map_final.pgm      # 默认导航地图
+│   ├── raicom_slam_map_final.yaml
+│   ├── raicom_slam_map_final.png      # 报告预览图
+│   ├── raicom_known_map.pgm           # 世界几何参考地图
 │   └── raicom_known_map.yaml
 ├── scripts/
 │   ├── mecanum_sim_driver.py          # 麦克纳姆轮状态仿真
 │   ├── simulation_status_monitor.py   # 仿真话题健康监控
 │   ├── patrol_navigator.py            # /cmd_vel 巡点控制
 │   ├── battlefield_recognition.py     # 识别区结果输出
+│   ├── odom_laser_mapper.py           # 默认固定边界栅格建图
 │   ├── task_evidence_recorder.py      # 任务证据记录
 │   ├── slam_status_monitor.py         # SLAM 状态监控
 │   ├── save_slam_map.py               # 保存 /map
@@ -77,6 +81,8 @@ myrobot_description/
 │   └── latest_mission_summary.py      # 查看最新任务总结
 ├── urdf/
 ├── meshes/
+├── recognition_templates/
+├── recognition_weights/               # 可选 ONNX 权重
 └── worlds/
 ```
 
@@ -189,7 +195,7 @@ rosrun myrobot_description static_workspace_check.py
 
 ## 7. 注意事项
 
-1. `worlds/rm_map.world` 是原始 Gazebo 场景文件，默认不需要修改。
+1. `worlds/rm_map.world` 含视觉识别面板，面板没有碰撞几何。
 2. 默认 `task_patrol.launch` 走导航栈，目标点优先改 `config/navigation_params.yaml`。
 3. 只有在使用 `task_patrol_simple.launch` 时，才优先改 `config/task_params.yaml` 的 `waypoints`。
 4. 当前底盘驱动是 Gazebo 仿真驱动，不是实体车硬件驱动。

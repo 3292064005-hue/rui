@@ -71,6 +71,25 @@ class BattlefieldRecognition(object):
         self.orb_match_threshold = int(rospy.get_param('~orb_match_threshold', 12))
         self.template_match_threshold = float(rospy.get_param('~template_match_threshold', 0.68))
         self.camera_crop = self._parse_crop(rospy.get_param('~camera_crop', [0.05, 0.95, 0.05, 0.95]))
+        self.recognition_backend = str(
+            rospy.get_param('~recognition_backend', 'auto')).strip().lower()
+        self.weights_path = self._resolve_optional_path(
+            rospy.get_param('~recognition_weights', ''))
+        self.model_labels = self._parse_model_labels(
+            rospy.get_param('~recognition_model_labels',
+                            ['enemy', 'friendly', 'hostage']))
+        model_size = rospy.get_param('~recognition_model_input_size', [224, 224])
+        self.model_input_size = self._parse_model_size(model_size)
+        self.model_scale = float(
+            rospy.get_param('~recognition_model_scale', 1.0 / 255.0))
+        self.model_mean = self._parse_model_mean(rospy.get_param(
+            '~recognition_model_mean', [0.0, 0.0, 0.0]))
+        self.model_swap_rb = bool(
+            rospy.get_param('~recognition_model_swap_rb', True))
+        self.model_confidence = float(
+            rospy.get_param('~recognition_model_confidence', 0.60))
+        self.model_net = None
+        self.active_backend = 'template'
 
         self.zones = self._parse_zones(rospy.get_param('~zones', []))
         if not self.zones:
@@ -97,6 +116,7 @@ class BattlefieldRecognition(object):
         self.orb = cv2.ORB_create(nfeatures=800)
         self.template_dir = self._resolve_template_dir(rospy.get_param('~template_dir', ''))
         self.templates = self._load_templates(self.template_dir)
+        self._load_optional_model()
 
         self.result_pub = rospy.Publisher(self.result_topic, String, queue_size=10, latch=True)
         self.summary_pub = rospy.Publisher(self.summary_topic, String, queue_size=10, latch=True)
@@ -105,9 +125,83 @@ class BattlefieldRecognition(object):
         self.status_sub = rospy.Subscriber(self.status_topic, String, self._status_cb, queue_size=10)
 
         rospy.loginfo(
-            'battlefield_recognition: loaded %d zones, %d templates, image_topic=%s status_topic=%s frame_dir=%s',
-            len(self.zones), len(self.templates), self.image_topic, self.status_topic, self.frame_dir
+            'battlefield_recognition: backend=%s loaded %d zones, %d templates, '
+            'weights=%s image_topic=%s status_topic=%s frame_dir=%s',
+            self.active_backend, len(self.zones), len(self.templates),
+            self.weights_path or '<not configured>', self.image_topic,
+            self.status_topic, self.frame_dir
         )
+
+    def _resolve_optional_path(self, raw):
+        if not raw:
+            return ''
+        value = os.path.expandvars(os.path.expanduser(str(raw)))
+        path = Path(value)
+        if path.is_absolute():
+            return str(path)
+        try:
+            package_root = subprocess.check_output(
+                ['rospack', 'find', 'myrobot_description']
+            ).decode('utf-8').strip()
+            return str(Path(package_root) / path)
+        except Exception:
+            return str(Path(__file__).resolve().parents[1] / path)
+
+    def _parse_model_size(self, raw):
+        if not isinstance(raw, (list, tuple)) or len(raw) != 2:
+            return (224, 224)
+        return (max(16, int(raw[0])), max(16, int(raw[1])))
+
+    def _parse_model_labels(self, raw):
+        if not isinstance(raw, (list, tuple)) or not raw:
+            raise rospy.ROSException(
+                'recognition_model_labels must be a non-empty list')
+        labels = [str(label).strip().lower() for label in raw]
+        supported = {'enemy', 'friendly', 'hostage'}
+        unknown = sorted(set(labels) - supported)
+        if unknown:
+            raise rospy.ROSException(
+                'Unsupported recognition_model_labels: %s' %
+                ', '.join(unknown))
+        return labels
+
+    def _parse_model_mean(self, raw):
+        if not isinstance(raw, (list, tuple)) or len(raw) != 3:
+            raise rospy.ROSException(
+                'recognition_model_mean must contain three values')
+        return tuple(float(value) for value in raw)
+
+    def _load_optional_model(self):
+        if self.recognition_backend not in ('auto', 'template', 'onnx'):
+            raise rospy.ROSException(
+                'recognition_backend must be auto, template, or onnx')
+        if self.recognition_backend == 'template':
+            return
+        if not self.weights_path or not os.path.isfile(self.weights_path):
+            if self.recognition_backend == 'onnx':
+                raise rospy.ROSException(
+                    'ONNX weights not found: %s' %
+                    (self.weights_path or '<empty recognition_weights>'))
+            rospy.logwarn(
+                'battlefield_recognition: no ONNX weights configured; '
+                'using template backend')
+            return
+        if Path(self.weights_path).suffix.lower() != '.onnx':
+            raise rospy.ROSException(
+                'Only ONNX recognition weights are supported: %s' %
+                self.weights_path)
+        try:
+            self.model_net = cv2.dnn.readNetFromONNX(self.weights_path)
+            self.active_backend = 'onnx'
+        except Exception as exc:
+            if self.recognition_backend == 'onnx':
+                raise rospy.ROSException(
+                    'Failed to load ONNX weights %s: %s' %
+                    (self.weights_path, exc))
+            rospy.logwarn(
+                'battlefield_recognition: failed to load ONNX weights %s; '
+                'using template backend: %s', self.weights_path, exc)
+            self.model_net = None
 
     def _resolve_template_dir(self, raw):
         if raw:
@@ -288,6 +382,9 @@ class BattlefieldRecognition(object):
             'robot_pose': {'x': round(x, 3), 'y': round(y, 3), 'yaw': round(yaw, 3)},
             'distance_to_zone_center': round(distance, 3),
             'mode': mode,
+            'recognition_backend': self.active_backend,
+            'recognition_weights': (
+                self.weights_path if self.active_backend == 'onnx' else ''),
             'stamp': rospy.Time.now().to_sec(),
             'detections': [],
             'expected_counts': {
@@ -302,7 +399,9 @@ class BattlefieldRecognition(object):
         if frame is None:
             reason = 'camera image timeout on %s' % self.image_topic
             if self.allow_expected_count_fallback:
-                result = self._configured_result(zone, pose, distance, mode='template_image_detection_fallback')
+                result = self._configured_result(
+                    zone, pose, distance,
+                    mode='%s_image_detection_fallback' % self.active_backend)
                 result['fallback_reason'] = reason
                 return result
             return self._failed_result(zone, pose, distance, reason)
@@ -310,7 +409,9 @@ class BattlefieldRecognition(object):
         cropped = self._crop_frame(frame)
         detections, annotated = self._detect_cards(cropped)
         if not detections and self.allow_expected_count_fallback:
-            result = self._configured_result(zone, pose, distance, mode='template_image_detection_fallback')
+            result = self._configured_result(
+                zone, pose, distance,
+                mode='%s_image_detection_fallback' % self.active_backend)
             result['fallback_reason'] = 'no cards detected'
             raw_path, ann_path = self._save_evidence(zone['name'], cropped, annotated)
             result['evidence_image'] = ann_path
@@ -333,7 +434,9 @@ class BattlefieldRecognition(object):
             'hostage': counts['hostage'],
             'robot_pose': {'x': round(x, 3), 'y': round(y, 3), 'yaw': round(yaw, 3)},
             'distance_to_zone_center': round(distance, 3),
-            'mode': 'template_image_detection',
+            'mode': '%s_image_detection' % self.active_backend,
+            'recognition_backend': self.active_backend,
+            'recognition_weights': self.weights_path if self.active_backend == 'onnx' else '',
             'stamp': rospy.Time.now().to_sec(),
             'detections': detections,
             'evidence_image': ann_path,
@@ -356,7 +459,10 @@ class BattlefieldRecognition(object):
             'hostage': 0,
             'robot_pose': {'x': round(x, 3), 'y': round(y, 3), 'yaw': round(yaw, 3)},
             'distance_to_zone_center': round(distance, 3),
-            'mode': 'template_image_detection_failed',
+            'mode': '%s_image_detection_failed' % self.active_backend,
+            'recognition_backend': self.active_backend,
+            'recognition_weights': (
+                self.weights_path if self.active_backend == 'onnx' else ''),
             'stamp': rospy.Time.now().to_sec(),
             'detections': [],
             'evidence_image': '',
@@ -435,6 +541,10 @@ class BattlefieldRecognition(object):
         return [quad for _center_x, quad in candidates]
 
     def _classify_card(self, card_image):
+        if self.model_net is not None:
+            model_result = self._classify_card_onnx(card_image)
+            if model_result is not None:
+                return model_result
         gray = self._preprocess_gray(card_image)
         query_keypoints, query_desc = self.orb.detectAndCompute(gray, None)
         orb_result = self._best_orb_match(query_desc)
@@ -477,6 +587,43 @@ class BattlefieldRecognition(object):
             'method': best_method,
             'template_name': best_template,
             'keypoints': 0 if query_keypoints is None else len(query_keypoints),
+        }
+
+    def _classify_card_onnx(self, card_image):
+        try:
+            blob = cv2.dnn.blobFromImage(
+                card_image,
+                scalefactor=self.model_scale,
+                size=self.model_input_size,
+                mean=self.model_mean,
+                swapRB=self.model_swap_rb,
+                crop=False)
+            self.model_net.setInput(blob)
+            output = np.asarray(self.model_net.forward()).reshape(-1)
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                5.0, 'battlefield_recognition: ONNX inference failed; '
+                'falling back to templates: %s', exc)
+            return None
+        if output.size != len(self.model_labels):
+            rospy.logwarn_throttle(
+                5.0, 'battlefield_recognition: ONNX output has %d values, '
+                'but recognition_model_labels has %d entries',
+                output.size, len(self.model_labels))
+            return None
+        shifted = output - np.max(output)
+        probabilities = np.exp(shifted)
+        probabilities /= max(float(np.sum(probabilities)), 1e-12)
+        index = int(np.argmax(probabilities))
+        confidence = float(probabilities[index])
+        if confidence < self.model_confidence:
+            return None
+        return {
+            'label': self.model_labels[index],
+            'score': round(confidence, 3),
+            'method': 'onnx_classifier',
+            'template_name': '',
+            'model_class_index': index,
         }
 
     def _preprocess_gray(self, image):
@@ -576,6 +723,7 @@ class BattlefieldRecognition(object):
         total_friendly = sum(int(item.get('friendly', 0)) for item in snapshot)
         total_hostage = sum(int(item.get('hostage', 0)) for item in snapshot)
         summary = {
+            'recognition_backend': self.active_backend,
             'reported_zones': len(reported),
             'total_zones': len(self.zones),
             'all_zones_reported': len(reported) >= len(self.zones),

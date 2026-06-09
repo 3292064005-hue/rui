@@ -41,9 +41,9 @@
         </visual>
 
         <collision name='outer_wall_bottom_collision'>
-          <pose>2.250000 -3.775000 0.170000 0 0 0</pose>
+          <pose>2.250000 -3.775000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>5.100000 0.050000 0.300000</size></box>
+            <box><size>5.100000 0.050000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -52,9 +52,9 @@
           </surface>
         </collision>
         <visual name='outer_wall_bottom_visual'>
-          <pose>2.250000 -3.775000 0.170000 0 0 0</pose>
+          <pose>2.250000 -3.775000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>5.100000 0.050000 0.300000</size></box>
+            <box><size>5.100000 0.050000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -65,9 +65,9 @@
         </visual>
 
         <collision name='outer_wall_top_collision'>
-          <pose>2.250000 0.275000 0.170000 0 0 0</pose>
+          <pose>2.250000 0.275000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>5.100000 0.050000 0.300000</size></box>
+            <box><size>5.100000 0.050000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -76,9 +76,9 @@
           </surface>
         </collision>
         <visual name='outer_wall_top_visual'>
-          <pose>2.250000 0.275000 0.170000 0 0 0</pose>
+          <pose>2.250000 0.275000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>5.100000 0.050000 0.300000</size></box>
+            <box><size>5.100000 0.050000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -89,9 +89,9 @@
         </visual>
 
         <collision name='outer_wall_left_collision'>
-          <pose>-0.275000 -1.750000 0.170000 0 0 0</pose>
+          <pose>-0.275000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 4.000000 0.300000</size></box>
+            <box><size>0.050000 4.000000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -100,9 +100,9 @@
           </surface>
         </collision>
         <visual name='outer_wall_left_visual'>
-          <pose>-0.275000 -1.750000 0.170000 0 0 0</pose>
+          <pose>-0.275000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 4.000000 0.300000</size></box>
+            <box><size>0.050000 4.000000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -113,9 +113,9 @@
         </visual>
 
         <collision name='outer_wall_right_collision'>
-          <pose>4.775000 -1.750000 0.170000 0 0 0</pose>
+          <pose>4.775000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 4.000000 0.300000</size></box>
+            <box><size>0.050000 4.000000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -124,9 +124,9 @@
           </surface>
         </collision>
         <visual name='outer_wall_right_visual'>
-          <pose>4.775000 -1.750000 0.170000 0 0 0</pose>
+          <pose>4.775000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 4.000000 0.300000</size></box>
+            <box><size>0.050000 4.000000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -137,9 +137,9 @@
         </visual>
 
         <collision name='inner_wall_left_collision'>
-          <pose>0.250000 -1.750000 0.170000 0 0 0</pose>
+          <pose>0.250000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 3.000000 0.300000</size></box>
+            <box><size>0.050000 3.000000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -148,9 +148,9 @@
           </surface>
         </collision>
         <visual name='inner_wall_left_visual'>
-          <pose>0.250000 -1.750000 0.170000 0 0 0</pose>
+          <pose>0.250000 -1.750000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.050000 3.000000 0.300000</size></box>
+            <box><size>0.050000 3.000000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -161,9 +161,9 @@
         </visual>
 
         <collision name='inner_wall_top_collision'>
-          <pose>2.250000 -0.250000 0.170000 0 0 0</pose>
+          <pose>2.250000 -0.250000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>4.000000 0.050000 0.300000</size></box>
+            <box><size>4.000000 0.050000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -172,9 +172,9 @@
           </surface>
         </collision>
         <visual name='inner_wall_top_visual'>
-          <pose>2.250000 -0.250000 0.170000 0 0 0</pose>
+          <pose>2.250000 -0.250000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>4.000000 0.050000 0.300000</size></box>
+            <box><size>4.000000 0.050000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -185,9 +185,9 @@
         </visual>
 
         <collision name='left_obstacle_top_collision'>
-          <pose>1.742500 -1.242500 0.145000 0 0 0</pose>
+          <pose>1.742500 -1.242500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>1.985000 0.985000 0.250000</size></box>
+            <box><size>1.985000 0.985000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -196,9 +196,9 @@
           </surface>
         </collision>
         <visual name='left_obstacle_top_visual'>
-          <pose>1.742500 -1.242500 0.145000 0 0 0</pose>
+          <pose>1.742500 -1.242500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>1.985000 0.985000 0.250000</size></box>
+            <box><size>1.985000 0.985000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -209,9 +209,9 @@
         </visual>
 
         <collision name='left_obstacle_mid_upper_collision'>
-          <pose>1.242500 -2.025000 0.145000 0 0 0</pose>
+          <pose>1.242500 -2.025000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.580000 0.250000</size></box>
+            <box><size>0.985000 0.580000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -220,9 +220,9 @@
           </surface>
         </collision>
         <visual name='left_obstacle_mid_upper_visual'>
-          <pose>1.242500 -2.025000 0.145000 0 0 0</pose>
+          <pose>1.242500 -2.025000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.580000 0.250000</size></box>
+            <box><size>0.985000 0.580000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -233,9 +233,9 @@
         </visual>
 
         <collision name='left_obstacle_mid_back_collision'>
-          <pose>1.542500 -2.540000 0.145000 0 0 0</pose>
+          <pose>1.542500 -2.540000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.385000 0.450000 0.250000</size></box>
+            <box><size>0.385000 0.450000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -244,9 +244,9 @@
           </surface>
         </collision>
         <visual name='left_obstacle_mid_back_visual'>
-          <pose>1.542500 -2.540000 0.145000 0 0 0</pose>
+          <pose>1.542500 -2.540000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.385000 0.450000 0.250000</size></box>
+            <box><size>0.385000 0.450000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -257,9 +257,9 @@
         </visual>
 
         <collision name='left_obstacle_bottom_collision'>
-          <pose>1.242500 -3.257500 0.145000 0 0 0</pose>
+          <pose>1.242500 -3.257500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.985000 0.250000</size></box>
+            <box><size>0.985000 0.985000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -268,9 +268,9 @@
           </surface>
         </collision>
         <visual name='left_obstacle_bottom_visual'>
-          <pose>1.242500 -3.257500 0.145000 0 0 0</pose>
+          <pose>1.242500 -3.257500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.985000 0.250000</size></box>
+            <box><size>0.985000 0.985000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -281,9 +281,9 @@
         </visual>
 
         <collision name='right_obstacle_top_collision'>
-          <pose>3.757500 -0.742500 0.145000 0 0 0</pose>
+          <pose>3.757500 -0.742500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.985000 0.250000</size></box>
+            <box><size>0.985000 0.985000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -292,9 +292,9 @@
           </surface>
         </collision>
         <visual name='right_obstacle_top_visual'>
-          <pose>3.757500 -0.742500 0.145000 0 0 0</pose>
+          <pose>3.757500 -0.742500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.985000 0.250000</size></box>
+            <box><size>0.985000 0.985000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -305,9 +305,9 @@
         </visual>
 
         <collision name='right_obstacle_mid_upper_collision'>
-          <pose>3.757500 -1.317500 0.145000 0 0 0</pose>
+          <pose>3.757500 -1.317500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.165000 0.250000</size></box>
+            <box><size>0.985000 0.165000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -316,9 +316,9 @@
           </surface>
         </collision>
         <visual name='right_obstacle_mid_upper_visual'>
-          <pose>3.757500 -1.317500 0.145000 0 0 0</pose>
+          <pose>3.757500 -1.317500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.165000 0.250000</size></box>
+            <box><size>0.985000 0.165000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -329,9 +329,9 @@
         </visual>
 
         <collision name='right_obstacle_mid_back_collision'>
-          <pose>3.457500 -1.625000 0.145000 0 0 0</pose>
+          <pose>3.457500 -1.625000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.385000 0.450000 0.250000</size></box>
+            <box><size>0.385000 0.450000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -340,9 +340,9 @@
           </surface>
         </collision>
         <visual name='right_obstacle_mid_back_visual'>
-          <pose>3.457500 -1.625000 0.145000 0 0 0</pose>
+          <pose>3.457500 -1.625000 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.385000 0.450000 0.250000</size></box>
+            <box><size>0.385000 0.450000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -353,9 +353,9 @@
         </visual>
 
         <collision name='right_obstacle_mid_lower_collision'>
-          <pose>3.757500 -2.057500 0.145000 0 0 0</pose>
+          <pose>3.757500 -2.057500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.415000 0.250000</size></box>
+            <box><size>0.985000 0.415000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -364,9 +364,9 @@
           </surface>
         </collision>
         <visual name='right_obstacle_mid_lower_visual'>
-          <pose>3.757500 -2.057500 0.145000 0 0 0</pose>
+          <pose>3.757500 -2.057500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>0.985000 0.415000 0.250000</size></box>
+            <box><size>0.985000 0.415000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>
@@ -377,9 +377,9 @@
         </visual>
 
         <collision name='right_obstacle_bottom_collision'>
-          <pose>3.257500 -2.757500 0.145000 0 0 0</pose>
+          <pose>3.257500 -2.757500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>1.985000 0.985000 0.250000</size></box>
+            <box><size>1.985000 0.985000 0.600000</size></box>
           </geometry>
           <surface>
             <friction>
@@ -388,9 +388,9 @@
           </surface>
         </collision>
         <visual name='right_obstacle_bottom_visual'>
-          <pose>3.257500 -2.757500 0.145000 0 0 0</pose>
+          <pose>3.257500 -2.757500 0.320000 0 0 0</pose>
           <geometry>
-            <box><size>1.985000 0.985000 0.250000</size></box>
+            <box><size>1.985000 0.985000 0.600000</size></box>
           </geometry>
           <material>
             <ambient>0.000 0.000 0.000 1.000</ambient>

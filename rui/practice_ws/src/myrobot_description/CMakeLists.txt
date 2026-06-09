@@ -48,6 +48,6 @@ catkin_install_python(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY urdf meshes launch config worlds maps materials recognition_templates
+install(DIRECTORY urdf meshes launch config worlds maps materials recognition_templates recognition_weights
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

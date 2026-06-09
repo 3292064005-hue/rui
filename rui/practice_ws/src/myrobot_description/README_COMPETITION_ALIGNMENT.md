@@ -8,15 +8,15 @@
 - `rm_map.world` 中已加入两块视觉识别面板：
   - `zone_1` 面板内容为 `1 敌军 + 1 友军`
   - `zone_2` 面板内容为 `2 敌军 + 1 人质`
-- 识别节点使用 `/camera/image_raw` 做模板匹配，输出真实识别数量。
-- SLAM 仍基于 `/scan + /odom + TF` 建图。
+- 识别节点使用 `/camera/image_raw`，支持模板匹配和可选 ONNX 权重分类。
+- SLAM 默认基于 `/scan + /odom + TF` 的固定边界栅格建图。
 - 自主导航仍使用 `map_server + AMCL + move_base`。
 
 ## 2. 为什么识别面板不影响建图和导航
 
 - 识别面板只添加了 `visual`，没有添加 `collision`。
 - 激光雷达不会把这些图板当作障碍物。
-- 现有 `known_map`、`scan_filtered`、`move_base` 参数可以继续使用。
+- 最终 SLAM 地图、`scan_filtered` 和 `move_base` 参数可以继续使用。
 
 ## 3. 识别结果来源
 
@@ -39,6 +39,9 @@ ORB 模板匹配
 ```
 
 `config/task_params.yaml` 中保留的 `enemy / friendly / hostage` 字段，仅用于验收对照和日志核查。
+
+正式兵人权重可放入 `recognition_weights/`，并通过
+`recognition_weights` 参数启用；权重接口不改变现有识别话题。
 
 ## 4. 验收建议
 

@@ -22,14 +22,15 @@ move_base_waypoint_navigator.py 顺序发送目标点
 识别节点和证据记录节点输出任务结果
 ```
 
-默认导航地图为：
+默认导航地图为最终 SLAM 扫描结果：
 
 ```text
-maps/raicom_known_map.pgm
-maps/raicom_known_map.yaml
+maps/raicom_slam_map_final.pgm
+maps/raicom_slam_map_final.yaml
 ```
 
-该地图用于 `map_server`，原始 Gazebo 世界文件 `worlds/rm_map.world` 没有被修改。
+该地图用于 `map_server`。Gazebo 世界中的识别面板仅参与视觉渲染，
+不参与碰撞和激光扫描，因此不会改变地图可通行结构。
 
 ---
 
@@ -121,10 +122,10 @@ config/navigation_params.yaml
 
 ```yaml
 navigation_goals:
-  - {name: start_confirm, x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.3}
-  - {name: zone_1,        x: 0.55, y: -2.45, yaw:  0.0000, hold: 2.0}
-  - {name: zone_2,        x: 4.45, y: -1.55, yaw: -1.5708, hold: 2.0}
-  - {name: finish,        x: 0.00, y:  0.00, yaw:  3.1416, hold: 1.0}
+  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
+  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
+  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
+  - {name: finish,         x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
 ```
 
 字段说明：
@@ -166,7 +167,7 @@ roslaunch myrobot_description autonomous_navigation.launch \
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `map_file` | `maps/raicom_known_map.yaml` | map_server 加载的地图 |
+| `map_file` | `maps/raicom_slam_map_final.yaml` | map_server 加载的地图 |
 | `launch_rviz` | `true` | 是否打开 RViz |
 | `gui` | `true` | 是否显示 Gazebo GUI |
 | `paused` | `false` | Gazebo 是否暂停启动 |
@@ -246,20 +247,18 @@ config/costmap_common_params.yaml
 
 ---
 
-## 10. 重新生成默认导航地图
+## 10. 地图文件
 
-默认地图由世界几何生成，不修改世界文件：
-
-```bash
-rosrun myrobot_description generate_known_map.py
-```
-
-生成文件：
+默认导航使用巡航扫描后保存的地图：
 
 ```text
-src/myrobot_description/maps/raicom_known_map.pgm
-src/myrobot_description/maps/raicom_known_map.yaml
+src/myrobot_description/maps/raicom_slam_map_final.pgm
+src/myrobot_description/maps/raicom_slam_map_final.yaml
 ```
+
+`raicom_known_map.*` 仅作为世界几何参考地图保留，不再是默认导航输入。
+需要重新建图时运行 `slam_mapping.launch`，完成巡航后再运行
+`save_slam_map.launch`。
 
 ---
 

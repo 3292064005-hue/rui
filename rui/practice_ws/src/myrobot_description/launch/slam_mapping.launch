@@ -1,7 +1,7 @@
 <launch>
     <!--
       SLAM mapping launch file.
-      It does not modify worlds/rm_map.world. Gazebo loads the original map, gmapping builds /map from /scan + /odom.
+      Gazebo loads rm_map.world and builds /map from filtered laser scans and odometry.
     -->
     <arg name="launch_rviz" default="true" />
     <arg name="gui" default="true" />
@@ -43,7 +43,7 @@
           output="screen">
         <param name="input_scan_topic" value="$(arg raw_scan_topic)" />
         <param name="output_scan_topic" value="$(arg scan_topic)" />
-        <param name="min_valid_range" value="0.18" />
+        <param name="min_valid_range" value="0.22" />
     </node>
 
     <node if="$(eval arg('mapping_backend') == 'gmapping')"
@@ -73,8 +73,14 @@
         <param name="xmax" value="5.00" />
         <param name="ymax" value="0.50" />
         <param name="max_usable_range" value="6.0" />
+        <param name="hit_range_margin" value="0.03" />
+        <param name="hit_increment" value="2.5" />
+        <param name="free_increment" value="0.35" />
         <param name="occupied_threshold" value="1.0" />
+        <param name="min_hit_count" value="1" />
         <param name="min_component_cells" value="8" />
+        <param name="wall_thickness_cells" value="3" />
+        <param name="max_gap_cells" value="11" />
     </node>
 
     <node if="$(arg enable_slam_monitor)"

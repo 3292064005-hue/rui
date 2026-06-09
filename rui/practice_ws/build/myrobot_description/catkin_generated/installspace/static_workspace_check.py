@@ -39,6 +39,30 @@ def check_xml(path, errors):
         errors.append('%s XML parse failed: %s' % (path, exc))
 
 
+def read_pgm(path):
+    with open(str(path), 'rb') as handle:
+        tokens = []
+        while len(tokens) < 4:
+            line = handle.readline()
+            if not line:
+                raise ValueError('incomplete PGM header')
+            line = line.split(b'#', 1)[0]
+            tokens.extend(line.split())
+        magic = tokens[0].decode('ascii')
+        width = int(tokens[1])
+        height = int(tokens[2])
+        max_value = int(tokens[3])
+        if magic == 'P5':
+            pixels = list(handle.read(width * height))
+        elif magic == 'P2':
+            pixels = [int(value) for value in handle.read().split()]
+        else:
+            raise ValueError('unsupported PGM magic %s' % magic)
+    if max_value != 255 or len(pixels) != width * height:
+        raise ValueError('invalid PGM pixels or max value')
+    return magic, width, height, pixels
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     errors = []
@@ -78,6 +102,7 @@ def main():
         root / 'maps' / 'raicom_known_map.pgm',
         root / 'maps' / 'raicom_slam_map_final.yaml',
         root / 'maps' / 'raicom_slam_map_final.pgm',
+        root / 'recognition_weights' / 'README.md',
         root / 'scripts' / 'slam_status_monitor.py',
         root / 'scripts' / 'scan_self_filter.py',
         root / 'scripts' / 'odom_laser_mapper.py',
@@ -173,28 +198,60 @@ def main():
     else:
         errors.append('recognition_templates has too few images: found %d' % len(template_files))
 
+    task_params = root / 'config' / 'task_params.yaml'
+    task_text = task_params.read_text(encoding='utf-8')
+    for key in [
+            'recognition_backend:',
+            'recognition_weights:',
+            'recognition_model_labels:',
+            'recognition_model_input_size:',
+            'recognition_model_confidence:']:
+        if key in task_text:
+            print('[OK] recognition model parameter:', key[:-1])
+        else:
+            errors.append('missing recognition model parameter: %s' % key[:-1])
 
-    # Verify default navigation map files are internally consistent.
-    map_yaml = root / 'maps' / 'raicom_known_map.yaml'
-    map_pgm = root / 'maps' / 'raicom_known_map.pgm'
+
+    # Verify the final SLAM map and every main navigation entrypoint.
+    map_yaml = root / 'maps' / 'raicom_slam_map_final.yaml'
+    map_pgm = root / 'maps' / 'raicom_slam_map_final.pgm'
     if map_yaml.exists() and map_pgm.exists():
         yaml_text = map_yaml.read_text(errors='ignore')
-        if 'image: raicom_known_map.pgm' in yaml_text and 'resolution:' in yaml_text and 'origin:' in yaml_text:
+        if 'image: raicom_slam_map_final.pgm' in yaml_text and 'resolution:' in yaml_text and 'origin:' in yaml_text:
             print('[OK] navigation map yaml:', map_yaml.relative_to(root))
         else:
             errors.append('navigation map yaml is missing image/resolution/origin fields')
         try:
-            with open(str(map_pgm), 'r') as f:
-                magic = f.readline().strip()
-                comment_or_size = f.readline().strip()
-                size_line = f.readline().strip() if comment_or_size.startswith('#') else comment_or_size
-                width, height = [int(x) for x in size_line.split()[:2]]
-            if magic == 'P2' and width > 0 and height > 0:
+            magic, width, height, pixels = read_pgm(map_pgm)
+            if magic in ('P2', 'P5') and width > 0 and height > 0:
                 print('[OK] navigation map pgm: %dx%d' % (width, height))
             else:
                 errors.append('navigation map pgm header is invalid')
+            known_cells = sum(
+                1 for value in pixels if value < 65 or value > 250)
+            known_ratio = float(known_cells) / float(width * height)
+            if known_ratio >= 0.95:
+                print('[OK] final map known coverage: %.1f%%' %
+                      (known_ratio * 100.0))
+            else:
+                errors.append(
+                    'final map known coverage is too low: %.1f%% < 95.0%%' %
+                    (known_ratio * 100.0))
         except Exception as exc:
             errors.append('navigation map pgm cannot be read: %s' % exc)
+
+    expected_map_default = 'maps/raicom_slam_map_final.yaml'
+    for launch_name in (
+            'navigation.launch',
+            'task_patrol.launch',
+            'autonomous_navigation.launch'):
+        launch_path = root / 'launch' / launch_name
+        if expected_map_default in launch_path.read_text(errors='ignore'):
+            print('[OK] default navigation map:', launch_name)
+        else:
+            errors.append(
+                '%s does not default to %s' %
+                (launch_name, expected_map_default))
 
     if errors:
         print('\nStatic check failed:')

@@ -111,7 +111,7 @@ roslaunch myrobot_description save_slam_map.launch
 ~/myrobot_description_maps/raicom_slam_map.yaml
 ```
 
-本次完整 13 点扫描并清理孤立噪点后的验收地图同时保存在：
+本次完整 12 点扫描并清理孤立噪点、补齐短墙线缺口后的验收地图同时保存在：
 
 ```text
 ~/myrobot_description_maps/raicom_slam_map_final.pgm

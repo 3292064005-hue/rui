@@ -39,7 +39,7 @@ roslaunch myrobot_description full_simulation.launch
 
 默认会启动：
 
-1. Gazebo 和原始 `rm_map.world`；
+1. Gazebo 和带视觉识别面板的 `rm_map.world`；
 2. 机器人模型；
 3. 底盘平面运动插件；
 4. 轮子状态仿真节点；
@@ -246,4 +246,3 @@ enable_imu:=true
 - 串口/CAN 通信；
 - 编码器硬件反馈；
 - 真实 IMU 或真实雷达驱动。
-

@@ -2,7 +2,9 @@
 
 本工作空间是一个 ROS1 + Gazebo 仿真项目，核心包为 `myrobot_description`。项目已配置机器人模型、Gazebo 仿真、传感器接口、SLAM 建图、自主导航、任务巡检、识别结果输出和运行证据记录。
 
-> 说明：本项目保留原始 `worlds/rm_map.world`，没有修改地图世界文件。后续调路径、调导航、调识别结果时，优先改 `config/` 下的参数文件。
+> 说明：当前 `worlds/rm_map.world` 已加入两块仅视觉识别面板，不包含
+> 碰撞几何，不改变可通行区域。路径、导航和识别参数优先在 `config/`
+> 中修改。
 
 ---
 
@@ -49,7 +51,10 @@ sudo apt install \
   ros-$ROS_DISTRO-amcl \
   ros-$ROS_DISTRO-move-base \
   ros-$ROS_DISTRO-navigation \
-  ros-$ROS_DISTRO-slam-gmapping
+  ros-$ROS_DISTRO-slam-gmapping \
+  ros-$ROS_DISTRO-cv-bridge \
+  python3-opencv \
+  python3-numpy
 ```
 
 ---
@@ -181,7 +186,8 @@ rosrun myrobot_description latest_mission_summary.py
 |---|---|
 | 巡点路径、识别区数量 | `src/myrobot_description/config/task_params.yaml` |
 | 自主导航目标点 | `src/myrobot_description/config/navigation_params.yaml` |
-| SLAM 参数 | `src/myrobot_description/config/slam_gmapping_params.yaml` |
+| SLAM 参数 | `src/myrobot_description/launch/slam_mapping.launch`、`config/slam_gmapping_params.yaml` |
+| 兵人识别权重 | `src/myrobot_description/recognition_weights/` |
 | AMCL 参数 | `src/myrobot_description/config/amcl_params.yaml` |
 | move_base 参数 | `src/myrobot_description/config/move_base_params.yaml` |
 | 代价地图参数 | `src/myrobot_description/config/*costmap*_params.yaml` |
@@ -199,4 +205,4 @@ rosrun myrobot_description latest_mission_summary.py
 3. `src/myrobot_description/README_SLAM.md`：建图流程；
 4. `src/myrobot_description/README_NAVIGATION.md`：自主导航流程；
 5. `src/myrobot_description/README_TASK.md`：任务演示和结果记录。
-
+6. `REPORT.md`：比赛技术报告、算法说明与验收数据。

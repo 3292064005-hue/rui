@@ -11,53 +11,46 @@ odom_timeout: 8.0
 # Holonomic/mecanum patrol controller parameters.
 goal_tolerance: 0.08
 yaw_tolerance: 0.20
-position_gain: 0.90
-yaw_gain: 1.60
-max_linear_speed: 0.20
-max_lateral_speed: 0.16
-max_angular_speed: 0.90
+position_gain: 1.20
+yaw_gain: 1.80
+max_linear_speed: 0.30
+max_lateral_speed: 0.24
+max_angular_speed: 1.00
 face_path: false
 loop: false
 stop_at_end: true
 
-# Corridor-following waypoints for the existing rm_map.world.
-# Keep the patrol on corridor center lines; patrol_navigator.py does not plan around walls.
+# Legacy simple-controller route. The normal task uses navigation_goals from
+# navigation_params.yaml; this copy keeps task_patrol_simple.launch usable.
 waypoints:
-  - {name: 1,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 2,       x: 0.00, y:  -4.5, yaw: -1.5708, hold: 0.5}
-  - {name: 3,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 4,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 5,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 6,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 7,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 8,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 9,       x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 10,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 11,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 12,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 13,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 14,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 15,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 16,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 17,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 18,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 19,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
-  - {name: 20,      x: 0.00, y:  0.00, yaw: -1.5708, hold: 0.5}
+  - {name: left_wall_exit,     x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
+  - {name: zone_1_entry,       x: 0.52, y: -3.50, yaw:  0.0000, hold: 0.1}
+  - {name: zone_1,             x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
+  - {name: left_top_out,       x: 0.52, y: -0.58, yaw:  0.0000, hold: 0.1}
+  - {name: top_middle,         x: 3.00, y: -0.58, yaw: -1.5708, hold: 0.1}
+  - {name: right_wall_exit,    x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.1}
+  - {name: right_middle,       x: 2.00, y: -2.00, yaw: -1.5708, hold: 0.1}
+  - {name: right_wall_return,  x: 2.00, y: -3.50, yaw:  0.0000, hold: 0.1}
+  - {name: bottom_right,       x: 4.45, y: -3.50, yaw:  1.5708, hold: 0.1}
+  - {name: zone_2,             x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
+  - {name: right_top_out,      x: 4.45, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: top_return,         x: 2.20, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: finish,             x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
 
 # Recognition-zone trigger and expected values.
 # The recognizer now counts the target cards from /camera/image_raw. enemy / friendly / hostage
 # remain as acceptance baselines so the published JSON can include the expected counts.
 zones:
   - name: zone_1
-    center_x: 0.55
-    center_y: -2.45
+    center_x: 0.52
+    center_y: -2.55
     radius: 0.35
     enemy: 1
     friendly: 1
     hostage: 0
   - name: zone_2
     center_x: 4.45
-    center_y: -1.55
+    center_y: -1.65
     radius: 0.35
     enemy: 2
     friendly: 0
@@ -76,6 +69,19 @@ orb_match_threshold: 12
 template_match_threshold: 0.68
 recognition_capture_delay: 0.45
 allow_expected_count_fallback: false
+
+# Optional soldier-image model interface.
+# auto: use recognition_weights when a valid ONNX file exists, otherwise use templates.
+# template: always use ORB/template matching.
+# onnx: require a valid ONNX classifier and fail fast when it cannot be loaded.
+recognition_backend: auto
+recognition_weights: ""
+recognition_model_labels: [enemy, friendly, hostage]
+recognition_model_input_size: [224, 224]
+recognition_model_scale: 0.003921568627
+recognition_model_mean: [0.0, 0.0, 0.0]
+recognition_model_swap_rb: true
+recognition_model_confidence: 0.60
 
 # Evidence recorder / RViz overlay settings.
 # Log files are written outside the package so catkin clean will not delete them.

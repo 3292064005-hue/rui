@@ -2,21 +2,21 @@ TrajectoryPlannerROS:
   holonomic_robot: true
   meter_scoring: true
 
-  max_vel_x: 0.22
-  min_vel_x: -0.10
-  max_vel_y: 0.16
-  min_vel_y: -0.16
+  max_vel_x: 0.32
+  min_vel_x: -0.16
+  max_vel_y: 0.26
+  min_vel_y: -0.26
   # move_base only translates. The waypoint navigator rotates after stopping.
   max_vel_theta: 0.0
   min_in_place_vel_theta: 0.0
   min_vel_theta: 0.0
 
-  acc_lim_x: 0.60
-  acc_lim_y: 0.60
-  acc_lim_theta: 1.00
+  acc_lim_x: 0.90
+  acc_lim_y: 0.90
+  acc_lim_theta: 1.30
 
   escape_vel: -0.08
-  y_vels: [-0.16, -0.08, 0.0, 0.08, 0.16]
+  y_vels: [-0.26, -0.13, 0.0, 0.13, 0.26]
 
   xy_goal_tolerance: 0.18
   yaw_goal_tolerance: 3.1416

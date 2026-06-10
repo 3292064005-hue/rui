@@ -634,6 +634,19 @@ class BattlefieldRecognition(object):
             candidates.extend(self._infer_yolo_region(
                 frame[y0:y1, x0:x1], x0, y0))
 
+        # Re-run the same model on enlarged card crops. This preserves small
+        # distant targets that lose detail when the whole frame is letterboxed.
+        card_candidates = self._infer_yolo_cards(frame)
+        for card in card_candidates:
+            x, y, width, height = card['box']
+            candidates = [
+                item for item in candidates
+                if not (
+                    x <= item['box'][0] + item['box'][2] * 0.5 <= x + width and
+                    y <= item['box'][1] + item['box'][3] * 0.5 <= y + height)
+            ]
+            candidates.append(card)
+
         kept = []
         for class_index in range(len(self.yolo_class_names)):
             class_candidates = [
@@ -666,7 +679,7 @@ class BattlefieldRecognition(object):
             detections.append({
                 'label': label,
                 'score': round(confidence, 3),
-                'method': 'yolo_onnx_detector',
+                'method': item.get('method', 'yolo_onnx_detector'),
                 'bbox': [x, y, x1, y1],
                 'model_class_index': class_index,
                 'model_class_name': class_name,
@@ -682,6 +695,38 @@ class BattlefieldRecognition(object):
                 annotated, label_text, (x, max(24, y - 8)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
         return detections, annotated
+
+    def _infer_yolo_cards(self, frame):
+        frame_height, frame_width = frame.shape[:2]
+        card_candidates = []
+        for quad in self._find_card_quads(frame, self.min_card_area_px):
+            card_x0 = max(0, int(math.floor(np.min(quad[:, 0]))))
+            card_y0 = max(0, int(math.floor(np.min(quad[:, 1]))))
+            card_x1 = min(frame_width, int(math.ceil(np.max(quad[:, 0]))))
+            card_y1 = min(frame_height, int(math.ceil(np.max(quad[:, 1]))))
+            card_width = card_x1 - card_x0
+            card_height = card_y1 - card_y0
+            if card_width <= 0 or card_height <= 0:
+                continue
+
+            margin_x = max(12, int(round(card_width * 0.45)))
+            margin_y = max(16, int(round(card_height * 0.30)))
+            crop_x0 = max(0, card_x0 - margin_x)
+            crop_y0 = max(0, card_y0 - margin_y)
+            crop_x1 = min(frame_width, card_x1 + margin_x)
+            crop_y1 = min(frame_height, card_y1 + margin_y)
+            local = self._infer_yolo_region(
+                frame[crop_y0:crop_y1, crop_x0:crop_x1],
+                crop_x0, crop_y0)
+            if not local:
+                continue
+
+            best = max(local, key=lambda item: item['confidence'])
+            best = dict(best)
+            best['box'] = [card_x0, card_y0, card_width, card_height]
+            best['method'] = 'yolo_onnx_card_crop'
+            card_candidates.append(best)
+        return card_candidates
 
     def _infer_yolo_region(self, frame, offset_x, offset_y):
         input_width, input_height = self.model_input_size
@@ -794,9 +839,11 @@ class BattlefieldRecognition(object):
             fill_ratio = area / max(w * h, 1.0)
             if short_side < 40.0 or long_side < 70.0:
                 continue
-            if not (0.45 <= aspect <= 0.90):
+            # The zone-2 board is viewed obliquely from the narrow corridor,
+            # so valid cards can project to roughly one-third width/height.
+            if not (0.30 <= aspect <= 0.90):
                 continue
-            if fill_ratio < 0.55:
+            if fill_ratio < 0.48:
                 continue
             quad = cv2.boxPoints(rect)
             candidates.append((rect[0][0], quad))

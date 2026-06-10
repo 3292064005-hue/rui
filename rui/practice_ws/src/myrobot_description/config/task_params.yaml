@@ -13,9 +13,9 @@ goal_tolerance: 0.08
 yaw_tolerance: 0.20
 position_gain: 1.20
 yaw_gain: 1.80
-max_linear_speed: 0.30
-max_lateral_speed: 0.24
-max_angular_speed: 1.00
+max_linear_speed: 0.76
+max_lateral_speed: 0.60
+max_angular_speed: 2.30
 face_path: false
 loop: false
 stop_at_end: true

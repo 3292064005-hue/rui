@@ -44,16 +44,25 @@ def parse_goals(raw):
                 y = float(item['y'])
                 yaw = float(item.get('yaw', 0.0))
                 hold = float(item.get('hold', 0.0))
+                direct_path = bool(item.get('direct_path', False))
             elif isinstance(item, (list, tuple)) and len(item) >= 2:
                 name = 'goal_%02d' % index
                 x = float(item[0])
                 y = float(item[1])
                 yaw = float(item[2]) if len(item) >= 3 else 0.0
                 hold = float(item[3]) if len(item) >= 4 else 0.0
+                direct_path = False
             else:
                 rospy.logwarn('move_base_waypoint_navigator: skip invalid goal %r', item)
                 continue
-            goals.append({'name': name, 'x': x, 'y': y, 'yaw': yaw, 'hold': hold})
+            goals.append({
+                'name': name,
+                'x': x,
+                'y': y,
+                'yaw': yaw,
+                'hold': hold,
+                'direct_path': direct_path,
+            })
         except Exception as exc:
             rospy.logwarn('move_base_waypoint_navigator: skip goal %r: %s', item, exc)
     return goals
@@ -169,6 +178,7 @@ class MoveBaseWaypointNavigator(object):
                 'y': goal['y'],
                 'yaw': goal['yaw'],
                 'hold': self._goal_hold(goal),
+                'direct_path': bool(goal.get('direct_path', False)),
             }
         if index is not None:
             payload['waypoint_index'] = int(index)
@@ -297,7 +307,7 @@ class MoveBaseWaypointNavigator(object):
         return pose
 
     def _request_plan(self, pose, item):
-        if self.use_direct_path:
+        if self.use_direct_path or item.get('direct_path', False):
             return [
                 self._make_pose_stamped(pose[0], pose[1], pose[2]),
                 self._make_pose_stamped(item['x'], item['y'], pose[2]),
@@ -454,7 +464,7 @@ class MoveBaseWaypointNavigator(object):
                 state=GoalStatus.SUCCEEDED,
                 text=(
                     'direct odometry path followed with separate in-place rotation'
-                    if self.use_direct_path
+                    if self.use_direct_path or item.get('direct_path', False)
                     else 'Navfn path followed with separate in-place rotation'))
             hold = self._goal_hold(item)
             if hold > 0.0:

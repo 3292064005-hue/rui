@@ -71,6 +71,7 @@ class MoveBaseWaypointNavigator(object):
         self.clear_on_retry = bool(rospy.get_param('~navigation_clear_costmaps_on_retry', True))
         self.stop_on_failure = bool(rospy.get_param('~navigation_stop_on_failure', False))
         self.default_hold = float(rospy.get_param('~navigation_hold_at_goal', 0.8))
+        self.ignore_goal_hold = bool(rospy.get_param('~navigation_ignore_goal_hold', False))
         self.startup_stabilization_delay = float(rospy.get_param('~navigation_startup_stabilization_delay', 2.0))
         self.cmd_vel_topic = rospy.get_param('~cmd_vel_topic', '/cmd_vel')
         self.base_frame = rospy.get_param('~navigation_base_frame', 'base_footprint')
@@ -103,6 +104,7 @@ class MoveBaseWaypointNavigator(object):
         self.replan_interval = float(rospy.get_param('~navigation_replan_interval', 1.0))
         self.stuck_timeout = float(rospy.get_param('~navigation_stuck_timeout', 8.0))
         self.progress_distance = float(rospy.get_param('~navigation_progress_distance', 0.03))
+        self.patrol_repeats = max(1, int(rospy.get_param('~navigation_patrol_repeats', 1)))
 
         raw_goals = rospy.get_param('~navigation_goals', None)
         if raw_goals is None:
@@ -153,7 +155,10 @@ class MoveBaseWaypointNavigator(object):
         payload = {
             'event': event,
             'stamp': rospy.Time.now().to_sec(),
-            'total_waypoints': len(self.goals),
+            'total_waypoints': len(self.goals) * self.patrol_repeats,
+            'route_waypoints': len(self.goals),
+            'patrol_repeats': self.patrol_repeats,
+            'ignore_goal_hold': self.ignore_goal_hold,
             'navigation_stack': (
                 'direct_odom_holonomic' if self.use_direct_path else 'move_base'),
         }
@@ -163,7 +168,7 @@ class MoveBaseWaypointNavigator(object):
                 'x': goal['x'],
                 'y': goal['y'],
                 'yaw': goal['yaw'],
-                'hold': goal.get('hold', self.default_hold),
+                'hold': self._goal_hold(goal),
             }
         if index is not None:
             payload['waypoint_index'] = int(index)
@@ -178,6 +183,11 @@ class MoveBaseWaypointNavigator(object):
         self.status_pub.publish(msg)
         if self.patrol_status_pub is not self.status_pub:
             self.patrol_status_pub.publish(msg)
+
+    def _goal_hold(self, item):
+        if self.ignore_goal_hold:
+            return 0.0
+        return max(0.0, float(item.get('hold', self.default_hold)))
 
     def _make_goal(self, item, yaw=None):
         goal = MoveBaseGoal()
@@ -423,7 +433,7 @@ class MoveBaseWaypointNavigator(object):
             rospy.loginfo(
                 'move_base_waypoint_navigator: holonomic goal %d/%d attempt %d: '
                 '%s -> %.2f %.2f, then rotate to %.2f',
-                index + 1, len(self.goals), attempt, item['name'],
+                index + 1, len(self.goals) * self.patrol_repeats, attempt, item['name'],
                 item['x'], item['y'], item['yaw'])
             self._publish_status('target_started', goal=item, index=index, attempt=attempt)
             if not self._follow_holonomic_path(item):
@@ -446,7 +456,7 @@ class MoveBaseWaypointNavigator(object):
                     'direct odometry path followed with separate in-place rotation'
                     if self.use_direct_path
                     else 'Navfn path followed with separate in-place rotation'))
-            hold = max(0.0, float(item.get('hold', self.default_hold)))
+            hold = self._goal_hold(item)
             if hold > 0.0:
                 rospy.sleep(hold)
             return True
@@ -471,7 +481,8 @@ class MoveBaseWaypointNavigator(object):
                 self._clear_costmaps()
                 rospy.sleep(0.5)
             rospy.loginfo('move_base_waypoint_navigator: goal %d/%d attempt %d: %s -> %.2f %.2f %.2f',
-                          index + 1, len(self.goals), attempt, item['name'], item['x'], item['y'], item['yaw'])
+                          index + 1, len(self.goals) * self.patrol_repeats,
+                          attempt, item['name'], item['x'], item['y'], item['yaw'])
             self._publish_status('target_started', goal=item, index=index, attempt=attempt)
             translation_yaw = self._wait_for_current_yaw()
             if translation_yaw is None:
@@ -497,7 +508,7 @@ class MoveBaseWaypointNavigator(object):
                         return False
                     continue
                 self._publish_status('waypoint_reached', goal=item, index=index, attempt=attempt, state=state, text=result_text)
-                hold = max(0.0, float(item.get('hold', self.default_hold)))
+                hold = self._goal_hold(item)
                 if hold > 0.0:
                     rospy.sleep(hold)
                 return True
@@ -531,16 +542,23 @@ class MoveBaseWaypointNavigator(object):
         self._publish_status('patrol_started')
         completed = 0
         failures = 0
-        for index, item in enumerate(self.goals):
-            ok = self._run_one_goal(item, index)
-            if ok:
-                completed += 1
-            else:
-                failures += 1
-                if self.stop_on_failure:
-                    self._publish_status('patrol_aborted', goal=item, index=index,
-                                         text='stop_on_failure enabled')
-                    return False
+        for lap in range(self.patrol_repeats):
+            if self.patrol_repeats > 1:
+                rospy.loginfo(
+                    'move_base_waypoint_navigator: patrol lap %d/%d',
+                    lap + 1, self.patrol_repeats)
+            for index, item in enumerate(self.goals):
+                absolute_index = lap * len(self.goals) + index
+                ok = self._run_one_goal(item, absolute_index)
+                if ok:
+                    completed += 1
+                else:
+                    failures += 1
+                    if self.stop_on_failure:
+                        self._publish_status('patrol_aborted', goal=item,
+                                             index=absolute_index,
+                                             text='stop_on_failure enabled')
+                        return False
         self._stop_robot()
         event = 'patrol_completed' if failures == 0 else 'patrol_completed_with_failures'
         self._publish_status(event, text='completed_goals=%d failed_goals=%d' % (completed, failures))

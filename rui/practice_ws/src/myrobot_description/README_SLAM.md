@@ -1,6 +1,6 @@
 # SLAM 建图说明
 
-本文说明如何在 Gazebo 比赛地图中使用 ROS1 `gmapping` 进行在线建图，并保存生成的栅格地图。
+本文说明如何在 Gazebo 比赛地图中使用激光和里程计建图，并保存生成的栅格地图。
 
 ---
 
@@ -13,7 +13,7 @@ Gazebo 原始世界
   ↓
 机器人运动 + /scan + /odom + TF
   ↓
-slam_gmapping
+odom_laser_mapper 默认建图
   ↓
 /map
   ↓
@@ -58,11 +58,19 @@ roslaunch myrobot_description slam_mapping.launch
 
 自动建图直接读取 `config/navigation_params.yaml` 中的
 `navigation_goals`。此时尚无静态地图，因此节点使用 `odom` 坐标逐点
-平移，到点停稳后原地旋转，不依赖 `move_base` 或 `/move_base/make_plan`。
+平移，不依赖 `move_base` 或 `/move_base/make_plan`。默认完整巡航 3 次，
+用重复观测补齐墙体并过滤瞬时噪点。需要临时修改次数时可执行：
 
-默认 `mapping_backend:=odom_laser` 使用 Gazebo 里程计和激光构建固定
-5m x 4m 栅格，避免重复走廊造成 gmapping 假闭环。需要对比传统
-gmapping 时可执行：
+```bash
+roslaunch myrobot_description slam_mapping.launch patrol_repeats:=3
+```
+
+默认 `mapping_backend:=odom_laser` 使用 Gazebo 里程计和激光构建固定边界栅格，
+墙体需要至少 3 次激光命中才会进入地图，再经过小连通域过滤和正交墙体
+线段提取。机器人实际走过的底盘区域会强制标记为空闲，避免近场自反射沿
+巡航轨迹累计成假墙。
+
+需要对比传统 gmapping 时可执行：
 
 ```bash
 roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
@@ -173,7 +181,7 @@ config/slam_gmapping_params.yaml
 自动巡点路径：
 
 ```text
-config/task_params.yaml
+config/navigation_params.yaml
 ```
 
 RViz 配置：

@@ -9,8 +9,10 @@ material RAICOM/Zone1Panel
       diffuse 1 1 1 1
       specular 0 0 0 1
       emissive 1 1 1 1
-      cull_hardware none
-      cull_software none
+      scene_blend one zero
+      depth_check on
+      depth_write on
+      alpha_rejection greater_equal 128
       texture_unit
       {
         texture zone1_panel.jpg
@@ -32,8 +34,10 @@ material RAICOM/Zone2Panel
       diffuse 1 1 1 1
       specular 0 0 0 1
       emissive 1 1 1 1
-      cull_hardware none
-      cull_software none
+      scene_blend one zero
+      depth_check on
+      depth_write on
+      alpha_rejection greater_equal 128
       texture_unit
       {
         texture zone2_panel.jpg

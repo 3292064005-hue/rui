@@ -1,31 +1,39 @@
-# 兵人图像识别权重接口
+# 兵人图像识别权重
 
-此目录预留兵人分类模型权重。当前支持 OpenCV DNN 可读取的 ONNX
-分类模型，模型输入为单张已完成透视校正的目标卡图片，输出为类别 logits。
+正式识别使用从 `best.pt` 导出的 YOLO ONNX 检测模型。ROS 功能包自带
+CPU 版 ONNX Runtime，不依赖运行时安装 PyTorch、Ultralytics 或新版
+OpenCV。
 
-推荐文件名：
+模型文件：
 
 ```text
-soldier_classifier.onnx
+best.pt
+best.onnx
 ```
 
-启用方式：
+当前训练类别到任务类别的映射：
+
+```text
+renzhi -> hostage
+youjun -> friendly
+dijun  -> enemy
+```
+
+运行配置：
 
 ```yaml
-recognition_backend: auto
-recognition_weights: recognition_weights/soldier_classifier.onnx
-recognition_model_labels: [enemy, friendly, hostage]
-recognition_model_input_size: [224, 224]
-recognition_model_confidence: 0.60
+recognition_backend: yolo_onnx
+recognition_weights: recognition_weights/best.onnx
+recognition_model_input_size: [640, 640]
+recognition_model_confidence: 0.50
+recognition_yolo_iou_threshold: 0.45
+recognition_yolo_class_names: [renzhi, youjun, dijun]
+recognition_yolo_label_map:
+  renzhi: hostage
+  youjun: friendly
+  dijun: enemy
 ```
 
-`auto` 模式下，权重不存在或加载失败时自动使用现有 ORB/模板识别。
-`onnx` 模式下，权重缺失或格式错误会直接终止节点，适合正式验收。
-
-模型约定：
-
-- 格式：ONNX
-- 输入：`NCHW`，三通道图片
-- 输出：一个长度与 `recognition_model_labels` 相同的 logits 向量
-- 标签顺序必须与训练时类别索引完全一致
-- 当前接口用于分类；白底目标卡定位仍由 OpenCV 轮廓算法完成
+`yolo_onnx` 会在整张裁剪后的相机画面中检测目标，并对同类检测执行 NMS。
+权重缺失、格式错误或 OpenCV 无法加载时，节点会直接终止，避免正式任务
+悄悄退回模板识别。

@@ -4,43 +4,44 @@ base_frame: base_footprint
 odom_frame: odom
 map_frame: map
 
-# The simulated laser in turtlebot3_mecanum.urdf.xacro publishes /scan with 360 samples.
+# The simulated laser publishes 720 samples at 10 Hz. Limit matching to the
+# useful arena range so distant max-range returns do not dominate the score.
 throttle_scans: 1
-map_update_interval: 1.0
-maxUrange: 8.0
+map_update_interval: 0.5
+maxUrange: 6.0
 maxRange: 12.0
 
-# Scan matching. Conservative values for a small 5 m x 4 m indoor map.
-sigma: 0.05
+# Scan matching tuned for the clean simulated lidar and a compact indoor map.
+sigma: 0.04
 kernelSize: 1
-lstep: 0.05
-astep: 0.05
-iterations: 5
-lsigma: 0.075
+lstep: 0.03
+astep: 0.03
+iterations: 8
+lsigma: 0.05
 ogain: 3.0
 lskip: 0
-minimumScore: 30
+minimumScore: 50
 
-# Motion model noise. Keep enough freedom for scan matching to correct the
-# small physical drift introduced by Gazebo contacts and in-place rotations.
-srr: 0.05
-srt: 0.05
-str: 0.05
-stt: 0.05
+# Gazebo odometry is stable; lower noise keeps repeated patrol laps aligned
+# while leaving scan matching enough freedom to correct wheel-contact drift.
+srr: 0.03
+srt: 0.03
+str: 0.03
+stt: 0.03
 
 # Map update thresholds. Low thresholds make the map update frequently during slow autonomous patrol.
 linearUpdate: 0.10
-angularUpdate: 0.10
+angularUpdate: 0.08
 temporalUpdate: 0.5
 resampleThreshold: 0.5
-particles: 30
+particles: 40
 
 # Map bounds, meters. Covers the whole 5 m x 4 m arena plus margin.
 xmin: -1.0
 ymin: -4.5
 xmax: 6.0
 ymax: 1.0
-delta: 0.03
+delta: 0.02
 
 # Likelihood-field sampling parameters.
 llsamplerange: 0.01

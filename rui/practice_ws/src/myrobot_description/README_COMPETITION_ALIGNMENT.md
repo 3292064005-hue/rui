@@ -9,7 +9,7 @@
   - `zone_1` 面板内容为 `1 敌军 + 1 友军`
   - `zone_2` 面板内容为 `2 敌军 + 1 人质`
 - 识别节点使用 `/camera/image_raw`，支持模板匹配和可选 ONNX 权重分类。
-- SLAM 默认基于 `/scan + /odom + TF` 的固定边界栅格建图。
+- SLAM 默认基于 `/scan + /odom + TF` 的固定边界栅格建图，并用正交线段提取清理累计噪声。
 - 自主导航仍使用 `map_server + AMCL + move_base`。
 
 ## 2. 为什么识别面板不影响建图和导航

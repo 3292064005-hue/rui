@@ -8,6 +8,7 @@ import json
 import math
 import os
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -88,7 +89,19 @@ class BattlefieldRecognition(object):
             rospy.get_param('~recognition_model_swap_rb', True))
         self.model_confidence = float(
             rospy.get_param('~recognition_model_confidence', 0.60))
+        self.yolo_iou_threshold = float(
+            rospy.get_param('~recognition_yolo_iou_threshold', 0.45))
+        self.yolo_class_names = self._parse_yolo_class_names(
+            rospy.get_param(
+                '~recognition_yolo_class_names',
+                ['renzhi', 'youjun', 'dijun']))
+        self.yolo_label_map = self._parse_yolo_label_map(
+            rospy.get_param(
+                '~recognition_yolo_label_map',
+                {'renzhi': 'hostage', 'youjun': 'friendly', 'dijun': 'enemy'}))
         self.model_net = None
+        self.model_session = None
+        self.model_input_name = ''
         self.active_backend = 'template'
 
         self.zones = self._parse_zones(rospy.get_param('~zones', []))
@@ -165,6 +178,39 @@ class BattlefieldRecognition(object):
                 ', '.join(unknown))
         return labels
 
+    def _parse_yolo_class_names(self, raw):
+        if not isinstance(raw, (list, tuple)) or not raw:
+            raise rospy.ROSException(
+                'recognition_yolo_class_names must be a non-empty list')
+        names = [str(name).strip().lower() for name in raw]
+        if any(not name for name in names):
+            raise rospy.ROSException(
+                'recognition_yolo_class_names cannot contain empty names')
+        return names
+
+    def _parse_yolo_label_map(self, raw):
+        if not isinstance(raw, dict):
+            raise rospy.ROSException(
+                'recognition_yolo_label_map must be a dictionary')
+        supported = {'enemy', 'friendly', 'hostage'}
+        label_map = {
+            str(name).strip().lower(): str(label).strip().lower()
+            for name, label in raw.items()
+        }
+        unknown = sorted(set(label_map.values()) - supported)
+        if unknown:
+            raise rospy.ROSException(
+                'Unsupported recognition_yolo_label_map values: %s' %
+                ', '.join(unknown))
+        missing = [
+            name for name in self.yolo_class_names if name not in label_map
+        ]
+        if missing:
+            raise rospy.ROSException(
+                'recognition_yolo_label_map is missing classes: %s' %
+                ', '.join(missing))
+        return label_map
+
     def _parse_model_mean(self, raw):
         if not isinstance(raw, (list, tuple)) or len(raw) != 3:
             raise rospy.ROSException(
@@ -172,13 +218,15 @@ class BattlefieldRecognition(object):
         return tuple(float(value) for value in raw)
 
     def _load_optional_model(self):
-        if self.recognition_backend not in ('auto', 'template', 'onnx'):
+        supported_backends = ('auto', 'template', 'onnx', 'yolo_onnx')
+        if self.recognition_backend not in supported_backends:
             raise rospy.ROSException(
-                'recognition_backend must be auto, template, or onnx')
+                'recognition_backend must be auto, template, onnx, or '
+                'yolo_onnx')
         if self.recognition_backend == 'template':
             return
         if not self.weights_path or not os.path.isfile(self.weights_path):
-            if self.recognition_backend == 'onnx':
+            if self.recognition_backend in ('onnx', 'yolo_onnx'):
                 raise rospy.ROSException(
                     'ONNX weights not found: %s' %
                     (self.weights_path or '<empty recognition_weights>'))
@@ -191,10 +239,23 @@ class BattlefieldRecognition(object):
                 'Only ONNX recognition weights are supported: %s' %
                 self.weights_path)
         try:
-            self.model_net = cv2.dnn.readNetFromONNX(self.weights_path)
-            self.active_backend = 'onnx'
+            if self.recognition_backend == 'yolo_onnx':
+                ort = self._import_onnxruntime()
+                options = ort.SessionOptions()
+                options.intra_op_num_threads = 2
+                options.graph_optimization_level = (
+                    ort.GraphOptimizationLevel.ORT_ENABLE_ALL)
+                self.model_session = ort.InferenceSession(
+                    self.weights_path,
+                    sess_options=options,
+                    providers=['CPUExecutionProvider'])
+                self.model_input_name = self.model_session.get_inputs()[0].name
+                self.active_backend = 'yolo_onnx'
+            else:
+                self.model_net = cv2.dnn.readNetFromONNX(self.weights_path)
+                self.active_backend = 'onnx'
         except Exception as exc:
-            if self.recognition_backend == 'onnx':
+            if self.recognition_backend in ('onnx', 'yolo_onnx'):
                 raise rospy.ROSException(
                     'Failed to load ONNX weights %s: %s' %
                     (self.weights_path, exc))
@@ -202,6 +263,33 @@ class BattlefieldRecognition(object):
                 'battlefield_recognition: failed to load ONNX weights %s; '
                 'using template backend: %s', self.weights_path, exc)
             self.model_net = None
+
+    def _import_onnxruntime(self):
+        package_root = Path(__file__).resolve().parents[1]
+        candidates = [
+            package_root / 'python_vendor',
+            package_root.parent.parent / 'share' / 'myrobot_description' /
+            'python_vendor',
+        ]
+        try:
+            rospack_root = subprocess.check_output(
+                ['rospack', 'find', 'myrobot_description']
+            ).decode('utf-8').strip()
+            candidates.insert(0, Path(rospack_root) / 'python_vendor')
+        except Exception:
+            pass
+        for candidate in candidates:
+            if (candidate / 'onnxruntime' / '__init__.py').is_file():
+                path = str(candidate)
+                if path not in sys.path:
+                    sys.path.insert(0, path)
+                break
+        try:
+            import onnxruntime
+            return onnxruntime
+        except Exception as exc:
+            raise rospy.ROSException(
+                'Bundled ONNX Runtime could not be loaded: %s' % exc)
 
     def _resolve_template_dir(self, raw):
         if raw:
@@ -383,8 +471,7 @@ class BattlefieldRecognition(object):
             'distance_to_zone_center': round(distance, 3),
             'mode': mode,
             'recognition_backend': self.active_backend,
-            'recognition_weights': (
-                self.weights_path if self.active_backend == 'onnx' else ''),
+            'recognition_weights': self._active_weights_path(),
             'stamp': rospy.Time.now().to_sec(),
             'detections': [],
             'expected_counts': {
@@ -436,7 +523,7 @@ class BattlefieldRecognition(object):
             'distance_to_zone_center': round(distance, 3),
             'mode': '%s_image_detection' % self.active_backend,
             'recognition_backend': self.active_backend,
-            'recognition_weights': self.weights_path if self.active_backend == 'onnx' else '',
+            'recognition_weights': self._active_weights_path(),
             'stamp': rospy.Time.now().to_sec(),
             'detections': detections,
             'evidence_image': ann_path,
@@ -461,8 +548,7 @@ class BattlefieldRecognition(object):
             'distance_to_zone_center': round(distance, 3),
             'mode': '%s_image_detection_failed' % self.active_backend,
             'recognition_backend': self.active_backend,
-            'recognition_weights': (
-                self.weights_path if self.active_backend == 'onnx' else ''),
+            'recognition_weights': self._active_weights_path(),
             'stamp': rospy.Time.now().to_sec(),
             'detections': [],
             'evidence_image': '',
@@ -482,7 +568,15 @@ class BattlefieldRecognition(object):
         cv2.imwrite(ann_path, annotated_image)
         return raw_path, ann_path
 
+    def _active_weights_path(self):
+        if self.active_backend in ('onnx', 'yolo_onnx'):
+            return self.weights_path
+        return ''
+
     def _detect_cards(self, frame):
+        if self.active_backend == 'yolo_onnx':
+            return self._detect_yolo_onnx(frame)
+
         quads = self._find_card_quads(frame, self.min_card_area_px)
         annotated = frame.copy()
         detections = []
@@ -506,6 +600,176 @@ class BattlefieldRecognition(object):
             cv2.putText(annotated, label_text, (x0, max(24, y0 - 8)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
         return detections, annotated
+
+    def _detect_yolo_onnx(self, frame):
+        frame_height, frame_width = frame.shape[:2]
+        regions = [(0, 0, frame_width, frame_height)]
+        if frame_width > frame_height * 1.45:
+            tile_width = min(
+                frame_width, max(frame_height, int(round(frame_height * 1.35))))
+            tile_count = max(
+                2, int(math.ceil(
+                    float(frame_width - tile_width) /
+                    max(tile_width * 0.65, 1.0))) + 1)
+            for index in range(tile_count):
+                x0 = int(round(
+                    index * float(frame_width - tile_width) /
+                    max(tile_count - 1, 1)))
+                regions.append((x0, 0, x0 + tile_width, frame_height))
+        elif frame_height > frame_width * 1.45:
+            tile_height = min(
+                frame_height, max(frame_width, int(round(frame_width * 1.35))))
+            tile_count = max(
+                2, int(math.ceil(
+                    float(frame_height - tile_height) /
+                    max(tile_height * 0.65, 1.0))) + 1)
+            for index in range(tile_count):
+                y0 = int(round(
+                    index * float(frame_height - tile_height) /
+                    max(tile_count - 1, 1)))
+                regions.append((0, y0, frame_width, y0 + tile_height))
+
+        candidates = []
+        for x0, y0, x1, y1 in regions:
+            candidates.extend(self._infer_yolo_region(
+                frame[y0:y1, x0:x1], x0, y0))
+
+        kept = []
+        for class_index in range(len(self.yolo_class_names)):
+            class_candidates = [
+                item for item in candidates
+                if item['class_index'] == class_index
+            ]
+            if not class_candidates:
+                continue
+            indices = cv2.dnn.NMSBoxes(
+                [item['box'] for item in class_candidates],
+                [item['confidence'] for item in class_candidates],
+                self.model_confidence,
+                self.yolo_iou_threshold)
+            if indices is None or len(indices) == 0:
+                continue
+            for index in np.asarray(indices).reshape(-1):
+                kept.append(class_candidates[int(index)])
+
+        kept.sort(key=lambda item: item['box'][0])
+        annotated = frame.copy()
+        detections = []
+        for item in kept:
+            class_index = item['class_index']
+            class_name = self.yolo_class_names[class_index]
+            label = self.yolo_label_map[class_name]
+            x, y, width, height = item['box']
+            x1 = x + width
+            y1 = y + height
+            confidence = item['confidence']
+            detections.append({
+                'label': label,
+                'score': round(confidence, 3),
+                'method': 'yolo_onnx_detector',
+                'bbox': [x, y, x1, y1],
+                'model_class_index': class_index,
+                'model_class_name': class_name,
+            })
+            color = {
+                'enemy': (0, 0, 255),
+                'friendly': (255, 0, 0),
+                'hostage': (0, 255, 0),
+            }[label]
+            cv2.rectangle(annotated, (x, y), (x1, y1), color, 2)
+            label_text = '%s %.2f' % (label, confidence)
+            cv2.putText(
+                annotated, label_text, (x, max(24, y - 8)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
+        return detections, annotated
+
+    def _infer_yolo_region(self, frame, offset_x, offset_y):
+        input_width, input_height = self.model_input_size
+        frame_height, frame_width = frame.shape[:2]
+        scale = min(
+            float(input_width) / max(frame_width, 1),
+            float(input_height) / max(frame_height, 1))
+        resized_width = max(1, int(round(frame_width * scale)))
+        resized_height = max(1, int(round(frame_height * scale)))
+        resized = cv2.resize(
+            frame, (resized_width, resized_height),
+            interpolation=cv2.INTER_LINEAR)
+        pad_left = (input_width - resized_width) // 2
+        pad_right = input_width - resized_width - pad_left
+        pad_top = (input_height - resized_height) // 2
+        pad_bottom = input_height - resized_height - pad_top
+        letterboxed = cv2.copyMakeBorder(
+            resized, pad_top, pad_bottom, pad_left, pad_right,
+            cv2.BORDER_CONSTANT, value=(114, 114, 114))
+
+        try:
+            blob = cv2.dnn.blobFromImage(
+                letterboxed,
+                scalefactor=self.model_scale,
+                size=(input_width, input_height),
+                mean=self.model_mean,
+                swapRB=self.model_swap_rb,
+                crop=False)
+            if self.model_session is not None:
+                output = np.asarray(self.model_session.run(
+                    None, {self.model_input_name: blob})[0])
+            else:
+                self.model_net.setInput(blob)
+                output = np.asarray(self.model_net.forward())
+        except Exception as exc:
+            rospy.logerr_throttle(
+                5.0, 'battlefield_recognition: YOLO ONNX inference failed: %s',
+                exc)
+            return []
+
+        predictions = np.squeeze(output)
+        expected_columns = 4 + len(self.yolo_class_names)
+        if predictions.ndim == 1:
+            predictions = predictions.reshape(1, -1)
+        if predictions.ndim != 2:
+            rospy.logerr_throttle(
+                5.0, 'battlefield_recognition: unexpected YOLO output shape %s',
+                str(output.shape))
+            return []
+        if predictions.shape[0] == expected_columns:
+            predictions = predictions.T
+        if predictions.shape[1] != expected_columns:
+            rospy.logerr_throttle(
+                5.0, 'battlefield_recognition: YOLO output shape %s does not '
+                'match %d configured classes',
+                str(output.shape), len(self.yolo_class_names))
+            return []
+
+        candidates = []
+        for row in predictions:
+            scores = row[4:]
+            class_index = int(np.argmax(scores))
+            confidence = float(scores[class_index])
+            if confidence < self.model_confidence:
+                continue
+
+            center_x, center_y, box_width, box_height = [
+                float(value) for value in row[:4]
+            ]
+            x0 = int(round((center_x - box_width * 0.5 - pad_left) / scale))
+            y0 = int(round((center_y - box_height * 0.5 - pad_top) / scale))
+            x1 = int(round((center_x + box_width * 0.5 - pad_left) / scale))
+            y1 = int(round((center_y + box_height * 0.5 - pad_top) / scale))
+            x0 = max(0, min(x0, frame_width - 1))
+            y0 = max(0, min(y0, frame_height - 1))
+            x1 = max(0, min(x1, frame_width))
+            y1 = max(0, min(y1, frame_height))
+            if x1 <= x0 or y1 <= y0:
+                continue
+            candidates.append({
+                'class_index': class_index,
+                'confidence': confidence,
+                'box': [
+                    x0 + offset_x, y0 + offset_y,
+                    x1 - x0, y1 - y0,
+                ],
+            })
+        return candidates
 
     def _find_card_quads(self, frame, min_area):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)

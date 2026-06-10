@@ -205,12 +205,28 @@ def main():
             'recognition_weights:',
             'recognition_model_labels:',
             'recognition_model_input_size:',
-            'recognition_model_confidence:']:
+            'recognition_model_confidence:',
+            'recognition_yolo_iou_threshold:',
+            'recognition_yolo_class_names:',
+            'recognition_yolo_label_map:']:
         if key in task_text:
             print('[OK] recognition model parameter:', key[:-1])
         else:
             errors.append('missing recognition model parameter: %s' % key[:-1])
 
+    yolo_weights = root / 'recognition_weights' / 'best.onnx'
+    if yolo_weights.exists() and yolo_weights.stat().st_size > 1024 * 1024:
+        print('[OK] YOLO recognition weights:', yolo_weights.relative_to(root))
+    else:
+        errors.append('missing or invalid YOLO recognition weights: %s' %
+                      yolo_weights.relative_to(root))
+    ort_binding = (
+        root / 'python_vendor' / 'onnxruntime' / 'capi' /
+        'onnxruntime_pybind11_state.cpython-38-x86_64-linux-gnu.so')
+    if ort_binding.exists() and ort_binding.stat().st_size > 1024 * 1024:
+        print('[OK] bundled ONNX Runtime:', ort_binding.relative_to(root))
+    else:
+        errors.append('missing bundled ONNX Runtime Python 3.8 binding')
 
     # Verify the final SLAM map and every main navigation entrypoint.
     map_yaml = root / 'maps' / 'raicom_slam_map_final.yaml'
@@ -237,6 +253,53 @@ def main():
                 errors.append(
                     'final map known coverage is too low: %.1f%% < 95.0%%' %
                     (known_ratio * 100.0))
+
+            occupied = [
+                index for index, value in enumerate(pixels) if value < 65]
+            if len(occupied) >= 3000:
+                print('[OK] final map occupied cells:', len(occupied))
+            else:
+                errors.append(
+                    'final map has too few occupied cells: %d < 3000' %
+                    len(occupied))
+            if occupied:
+                occupied_rows = [index // width for index in occupied]
+                occupied_cols = [index % width for index in occupied]
+                bbox_width = max(occupied_cols) - min(occupied_cols) + 1
+                bbox_height = max(occupied_rows) - min(occupied_rows) + 1
+                if bbox_width >= 240 and bbox_height >= 190:
+                    print('[OK] final map occupied bounds: %dx%d' %
+                          (bbox_width, bbox_height))
+                else:
+                    errors.append(
+                        'final map occupied bounds are incomplete: %dx%d' %
+                        (bbox_width, bbox_height))
+
+            resolution_match = re.search(
+                r'^resolution:\s*([-+0-9.eE]+)', yaml_text, re.MULTILINE)
+            origin_match = re.search(
+                r'^origin:\s*\[\s*([-+0-9.eE]+)\s*,\s*'
+                r'([-+0-9.eE]+)', yaml_text, re.MULTILINE)
+            if resolution_match and origin_match:
+                resolution = float(resolution_match.group(1))
+                origin_x = float(origin_match.group(1))
+                origin_y = float(origin_match.group(2))
+                false_wall_cells = 0
+                for index, value in enumerate(pixels):
+                    if value >= 65:
+                        continue
+                    row, col = divmod(index, width)
+                    world_x = origin_x + (col + 0.5) * resolution
+                    world_y = origin_y + (height - row - 0.5) * resolution
+                    if (2.50 <= world_x <= 4.25 and
+                            -3.60 <= world_y <= -3.40):
+                        false_wall_cells += 1
+                if false_wall_cells == 0:
+                    print('[OK] final map lower-right corridor is clear')
+                else:
+                    errors.append(
+                        'final map lower-right corridor contains %d occupied cells' %
+                        false_wall_cells)
         except Exception as exc:
             errors.append('navigation map pgm cannot be read: %s' % exc)
 
@@ -252,6 +315,13 @@ def main():
             errors.append(
                 '%s does not default to %s' %
                 (launch_name, expected_map_default))
+
+    slam_launch_text = (
+        root / 'launch' / 'slam_mapping.launch').read_text(errors='ignore')
+    if '<arg name="patrol_repeats" default="3" />' in slam_launch_text:
+        print('[OK] SLAM patrol repeats: 3')
+    else:
+        errors.append('slam_mapping.launch does not default to 3 patrol repeats')
 
     if errors:
         print('\nStatic check failed:')

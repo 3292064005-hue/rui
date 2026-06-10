@@ -70,18 +70,25 @@ template_match_threshold: 0.68
 recognition_capture_delay: 0.45
 allow_expected_count_fallback: false
 
-# Optional soldier-image model interface.
-# auto: use recognition_weights when a valid ONNX file exists, otherwise use templates.
+# Soldier-image model interface.
+# auto: use recognition_weights as a legacy classifier when it exists, otherwise use templates.
 # template: always use ORB/template matching.
-# onnx: require a valid ONNX classifier and fail fast when it cannot be loaded.
-recognition_backend: auto
-recognition_weights: ""
+# onnx: require a legacy ONNX classifier.
+# yolo_onnx: run the trained YOLO detector on the full camera image.
+recognition_backend: yolo_onnx
+recognition_weights: recognition_weights/best.onnx
 recognition_model_labels: [enemy, friendly, hostage]
-recognition_model_input_size: [224, 224]
+recognition_model_input_size: [640, 640]
 recognition_model_scale: 0.003921568627
 recognition_model_mean: [0.0, 0.0, 0.0]
 recognition_model_swap_rb: true
-recognition_model_confidence: 0.60
+recognition_model_confidence: 0.50
+recognition_yolo_iou_threshold: 0.45
+recognition_yolo_class_names: [renzhi, youjun, dijun]
+recognition_yolo_label_map:
+  renzhi: hostage
+  youjun: friendly
+  dijun: enemy
 
 # Evidence recorder / RViz overlay settings.
 # Log files are written outside the package so catkin clean will not delete them.

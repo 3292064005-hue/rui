@@ -256,7 +256,7 @@ src/myrobot_description/maps/raicom_slam_map_final.pgm
 src/myrobot_description/maps/raicom_slam_map_final.yaml
 ```
 
-`raicom_known_map.*` 仅作为世界几何参考地图保留，不再是默认导航输入。
+`raicom_known_map.*` 仅作为世界几何参考地图保留，不是默认导航输入。
 需要重新建图时运行 `slam_mapping.launch`，完成巡航后再运行
 `save_slam_map.launch`。
 

@@ -159,24 +159,25 @@ zones:
 
 `task_params.yaml` 中的 `enemy / friendly / hostage` 现在作为验收期望值保留，识别结果来自真实图像检测，不再直接由配置生成。
 
-### 6.1 可选 ONNX 权重
+### 6.1 YOLO ONNX 权重
 
-将分类模型放入：
+正式权重文件位于：
 
 ```text
-recognition_weights/soldier_classifier.onnx
+recognition_weights/best.onnx
 ```
 
-然后设置：
+运行配置：
 
 ```yaml
-recognition_backend: auto
-recognition_weights: recognition_weights/soldier_classifier.onnx
-recognition_model_labels: [enemy, friendly, hostage]
+recognition_backend: yolo_onnx
+recognition_weights: recognition_weights/best.onnx
+recognition_model_input_size: [640, 640]
+recognition_yolo_class_names: [renzhi, youjun, dijun]
 ```
 
-模型不存在时 `auto` 自动回退模板。正式验收时可使用
-`recognition_backend: onnx` 强制检查权重。
+类别映射为 `renzhi -> hostage`、`youjun -> friendly`、
+`dijun -> enemy`。正式模式会强制检查 ONNX 权重，不会静默回退模板。
 
 ---
 

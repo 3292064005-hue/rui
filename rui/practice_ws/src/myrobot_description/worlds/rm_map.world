@@ -426,10 +426,26 @@
           </material>
         </visual>
 
-        <!-- Visual-only recognition panels for the RAICOM task.
-             They do not have collision geometry, so SLAM and navigation keep the same walkable map. -->
+        <!-- Opaque visual-only recognition panels for the RAICOM task.
+             The backing boards prevent the wall behind them from bleeding through.
+             They have no collision geometry, so SLAM keeps the same walkable map. -->
+        <visual name='zone1_recognition_backing'>
+          <pose>1.210000 -2.550000 0.200000 0 0 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box><size>0.030000 0.410000 0.480000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.050 0.050 0.050 1.000</ambient>
+            <diffuse>0.050 0.050 0.050 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.050 0.050 0.050 1.000</emissive>
+          </material>
+          <transparency>0.0</transparency>
+        </visual>
+
         <visual name='zone1_recognition_panel'>
-          <pose>1.20 -2.550000 0.2 0 0 0</pose>
+          <pose>1.190000 -2.550000 0.200000 0 0 0</pose>
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box><size>0.010000 0.380000 0.45</size></box>
@@ -441,10 +457,26 @@
               <name>RAICOM/Zone1Panel</name>
             </script>
           </material>
+          <transparency>0.0</transparency>
+        </visual>
+
+        <visual name='zone2_recognition_backing'>
+          <pose>3.890000 -1.650000 0.200000 0 0 1.57079632679</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <box><size>0.410000 0.030000 0.480000</size></box>
+          </geometry>
+          <material>
+            <ambient>0.050 0.050 0.050 1.000</ambient>
+            <diffuse>0.050 0.050 0.050 1.000</diffuse>
+            <specular>0.000 0.000 0.000 1.000</specular>
+            <emissive>0.050 0.050 0.050 1.000</emissive>
+          </material>
+          <transparency>0.0</transparency>
         </visual>
 
         <visual name='zone2_recognition_panel'>
-          <pose>3.90000 -1.65000 0.2 0 0 1.57079632679</pose>
+          <pose>3.910000 -1.650000 0.200000 0 0 1.57079632679</pose>
           <cast_shadows>false</cast_shadows>
           <geometry>
             <box><size>0.380000 0.010000 0.45</size></box>
@@ -456,6 +488,7 @@
               <name>RAICOM/Zone2Panel</name>
             </script>
           </material>
+          <transparency>0.0</transparency>
         </visual>
       </link>
     </model>

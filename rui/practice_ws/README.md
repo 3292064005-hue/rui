@@ -33,7 +33,7 @@ practice_ws/
 
 ## 2. 环境依赖
 
-建议使用 Ubuntu + ROS1。常见为 Melodic 或 Noetic。
+当前工程按 Ubuntu 20.04 + ROS Noetic + Python 3.8 验证。
 
 安装基础依赖：
 
@@ -62,7 +62,8 @@ sudo apt install \
 ## 3. 编译
 
 ```bash
-cd ~/practice_ws
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
 ```
@@ -70,7 +71,9 @@ source devel/setup.bash
 如果重新打开终端，仍需执行：
 
 ```bash
-source ~/practice_ws/devel/setup.bash
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
 ```
 
 ---
@@ -184,8 +187,8 @@ rosrun myrobot_description latest_mission_summary.py
 
 | 要修改的内容 | 文件 |
 |---|---|
-| 巡点路径、识别区数量 | `src/myrobot_description/config/task_params.yaml` |
-| 自主导航目标点 | `src/myrobot_description/config/navigation_params.yaml` |
+| 正式巡航目标点 | `src/myrobot_description/config/navigation_params.yaml` |
+| 识别区、识别模型参数 | `src/myrobot_description/config/task_params.yaml` |
 | SLAM 参数 | `src/myrobot_description/launch/slam_mapping.launch`、`config/slam_gmapping_params.yaml` |
 | 兵人识别权重 | `src/myrobot_description/recognition_weights/` |
 | AMCL 参数 | `src/myrobot_description/config/amcl_params.yaml` |
@@ -198,11 +201,12 @@ rosrun myrobot_description latest_mission_summary.py
 
 ## 8. 说明文档索引
 
-建议按以下顺序阅读：
+建议按以下顺序阅读。参数数值以 `config/*.yaml` 和 `launch/*.launch`
+为最终依据，文档中的片段仅用于说明：
 
 1. `src/myrobot_description/README.md`：项目总说明；
 2. `src/myrobot_description/README_SIMULATION.md`：仿真驱动和传感器；
 3. `src/myrobot_description/README_SLAM.md`：建图流程；
 4. `src/myrobot_description/README_NAVIGATION.md`：自主导航流程；
-5. `src/myrobot_description/README_TASK.md`：任务演示和结果记录。
+5. `src/myrobot_description/README_TASK.md`：任务演示和结果记录；
 6. `REPORT.md`：比赛技术报告、算法说明与验收数据。

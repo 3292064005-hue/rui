@@ -21,7 +21,7 @@
 | 地图保存 | 已完成 | 保存 `.pgm` 和 `.yaml` |
 | 自主导航 | 已完成 | `map_server + AMCL + move_base` |
 | 自动巡点 | 已完成 | 默认使用 `move_base` 顺序执行导航目标点 |
-| 识别结果输出 | 已完成 | 模板识别，预留 ONNX 权重分类接口 |
+| 识别结果输出 | 已完成 | YOLO ONNX 整帧检测，模板识别作为兼容后端 |
 | 证据记录 | 已完成 | 保存轨迹、识别结果、任务状态和总结 |
 
 ---
@@ -82,7 +82,8 @@ myrobot_description/
 ├── urdf/
 ├── meshes/
 ├── recognition_templates/
-├── recognition_weights/               # 可选 ONNX 权重
+├── recognition_weights/               # 正式 YOLO PT/ONNX 权重
+├── python_vendor/                     # Python 3.8 CPU ONNX Runtime
 └── worlds/
 ```
 
@@ -195,7 +196,18 @@ rosrun myrobot_description static_workspace_check.py
 
 ## 7. 注意事项
 
-1. `worlds/rm_map.world` 含视觉识别面板，面板没有碰撞几何。
+1. `worlds/rm_map.world` 含不透明视觉识别面板，面板没有碰撞几何。
 2. 默认 `task_patrol.launch` 走导航栈，目标点优先改 `config/navigation_params.yaml`。
 3. 只有在使用 `task_patrol_simple.launch` 时，才优先改 `config/task_params.yaml` 的 `waypoints`。
-4. 当前底盘驱动是 Gazebo 仿真驱动，不是实体车硬件驱动。
+4. 正式识别配置为 `yolo_onnx`，权重为 `recognition_weights/best.onnx`。
+5. 当前底盘驱动是 Gazebo 仿真驱动，不是实体车硬件驱动。
+
+## 8. 文档分工
+
+- `README_SIMULATION.md`：Gazebo、底盘与传感器；
+- `README_SLAM.md`：三圈自动建图与地图保存；
+- `README_NAVIGATION.md`：AMCL、move_base 和正式巡航路径；
+- `README_TASK.md`：YOLO 识别、结果话题与证据日志；
+- `ACCEPTANCE_CHECKLIST.md`：比赛前逐项检查。
+
+配置值发生变化时优先更新 YAML；文档不要复制完整参数表。

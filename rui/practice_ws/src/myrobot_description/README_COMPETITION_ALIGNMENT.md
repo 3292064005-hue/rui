@@ -8,13 +8,14 @@
 - `rm_map.world` 中已加入两块视觉识别面板：
   - `zone_1` 面板内容为 `1 敌军 + 1 友军`
   - `zone_2` 面板内容为 `2 敌军 + 1 人质`
-- 识别节点使用 `/camera/image_raw`，支持模板匹配和可选 ONNX 权重分类。
+- 识别节点使用 `/camera/image_raw` 和正式 YOLO ONNX 检测权重。
 - SLAM 默认基于 `/scan + /odom + TF` 的固定边界栅格建图，并用正交线段提取清理累计噪声。
 - 自主导航仍使用 `map_server + AMCL + move_base`。
 
 ## 2. 为什么识别面板不影响建图和导航
 
-- 识别面板只添加了 `visual`，没有添加 `collision`。
+- 识别面板由贴图前表面和不透明背板组成，只添加 `visual`，没有
+  `collision`。
 - 激光雷达不会把这些图板当作障碍物。
 - 最终 SLAM 地图、`scan_filtered` 和 `move_base` 参数可以继续使用。
 
@@ -29,19 +30,18 @@
   ↓
 读取相机画面
   ↓
-提取白底目标卡
+YOLO ONNX 整帧检测
   ↓
-ORB 模板匹配
-  ↓
-必要时回退灰度模板匹配
+宽画面重叠分块并统一 NMS
   ↓
 输出敌军 / 友军 / 人质数量
 ```
 
 `config/task_params.yaml` 中保留的 `enemy / friendly / hostage` 字段，仅用于验收对照和日志核查。
 
-正式兵人权重可放入 `recognition_weights/`，并通过
-`recognition_weights` 参数启用；权重接口不改变现有识别话题。
+正式权重为 `recognition_weights/best.onnx`，运行后端为
+`yolo_onnx`。模型原始类别映射为 `renzhi -> hostage`、
+`youjun -> friendly`、`dijun -> enemy`；识别话题保持不变。
 
 ## 4. 验收建议
 

@@ -5,14 +5,12 @@
 本项目面向 RAICOM 智能侦察仿真任务，基于 Ubuntu、ROS1 Noetic、
 Gazebo Classic 和 Python 实现四轮麦克纳姆机器人仿真系统。系统包含
 自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、固定边界
-栅格建图、AMCL 定位、move_base 自主导航、多点巡检、敌军/友军/人质
-图像识别以及任务证据记录。
+栅格建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
+敌军/友军/人质识别以及任务证据记录。
 
 机器人按照 `navigation_params.yaml` 中的 12 个目标点完成场地扫描和
-巡检。建图结果为 5.5m × 4.5m 栅格画布，分辨率 0.02m，地图尺寸
-275 × 225。最终扫描中 12/12 个目标点全部完成，终点位置误差约
-0.038m。最终地图已知区域覆盖率为 99.8%，仅剩 121 个边界未知栅格，
-且不存在小于 8 个栅格的孤立占据噪点。
+巡检。当前最终地图分辨率约 0.02m，地图尺寸为 295 × 245，原点为
+(-0.7, -4.2)。建图入口默认执行 3 圈巡航，以增加墙体观测次数。
 
 ## 1. 任务理解
 
@@ -109,15 +107,12 @@ roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
 
 | 指标 | 结果 |
 |---|---:|
-| 地图尺寸 | 275 × 225 |
-| 分辨率 | 0.02m |
-| 原点 | (-0.5, -4.0) |
-| 巡航点完成 | 12/12 |
-| 终点误差 | 0.038m |
-| 已知区域覆盖率 | 99.8% |
-| 未知栅格 | 121 |
-| 有效占据连通结构 | 6 |
-| 小于 8 像素孤立结构 | 0 |
+| 地图尺寸 | 295 × 245 |
+| 分辨率 | 约 0.02m |
+| 原点 | (-0.7, -4.2) |
+| 单圈导航目标 | 12 |
+| 默认建图巡航 | 3 圈 |
+| 导航地图 | `raicom_slam_map_final.yaml` |
 
 最终地图：
 
@@ -151,44 +146,38 @@ src/myrobot_description/maps/raicom_slam_map_final.yaml
 到达识别点并停稳
   -> 获取 /camera/image_raw
   -> 裁剪有效视野
-  -> 白底轮廓提取
-  -> 透视校正目标卡
-  -> ONNX 分类或模板分类
+  -> YOLO ONNX 整帧检测
+  -> 宽画面重叠分块
+  -> 同类 NMS 去重
   -> 统计 enemy/friendly/hostage
   -> 保存原图与标注图
 ```
 
-默认模板库包含 16 张图片。模板分类先使用 ORB 特征匹配，特征不足时
-回退灰度模板匹配。
+模型输入尺寸为 640 × 640。对于横向较宽的相机画面，节点会同时执行
+整帧与重叠分块推理，避免多个远处目标缩小后漏检。
 
-### 6.2 权重文件预留接口
+### 6.2 正式权重
 
-识别节点支持三种后端：
-
-| 参数值 | 行为 |
-|---|---|
-| `auto` | ONNX 权重存在则使用模型，否则使用模板 |
-| `template` | 始终使用 ORB/模板识别 |
-| `onnx` | 强制使用 ONNX，权重错误时节点启动失败 |
-
-权重目录：
+正式模型文件：
 
 ```text
-src/myrobot_description/recognition_weights/
+src/myrobot_description/recognition_weights/best.pt
+src/myrobot_description/recognition_weights/best.onnx
 ```
 
 配置示例：
 
 ```yaml
-recognition_backend: auto
-recognition_weights: recognition_weights/soldier_classifier.onnx
-recognition_model_labels: [enemy, friendly, hostage]
-recognition_model_input_size: [224, 224]
-recognition_model_confidence: 0.60
+recognition_backend: yolo_onnx
+recognition_weights: recognition_weights/best.onnx
+recognition_model_input_size: [640, 640]
+recognition_model_confidence: 0.50
+recognition_yolo_class_names: [renzhi, youjun, dijun]
 ```
 
-ONNX 模型输入为透视校正后的单张目标卡，输出为三个类别的 logits。
-模型接口不会改变 `/recognition_result` 和 `/recognition_summary`。
+类别映射为 `renzhi -> hostage`、`youjun -> friendly`、
+`dijun -> enemy`。功能包携带 Python 3.8 CPU ONNX Runtime，运行时
+不要求安装 PyTorch 或新版 OpenCV。
 
 ## 7. 数据记录与可复现性
 
@@ -243,12 +232,11 @@ rostopic echo /recognition_summary
 
 1. 针对仿真重复走廊设计固定边界里程计激光建图，避免 gmapping 假闭环；
 2. 麦克纳姆导航采用全向平移与原地转向解耦控制；
-3. 模板识别与 ONNX 权重推理共用同一接口，可平滑升级算法；
+3. YOLO 整帧与重叠分块推理兼顾单目标和宽画面多目标；
 4. 建图、导航、识别和证据日志形成完整可追溯任务链。
 
 ## 10. 后续工作
 
-- 使用正式兵人数据集训练 ONNX 分类模型；
 - 增加亮度、视角和遮挡增强，提高识别鲁棒性；
 - 增加独立测试集混淆矩阵、准确率和召回率；
 - 根据比赛现场机器性能调整模型尺寸和推理频率。

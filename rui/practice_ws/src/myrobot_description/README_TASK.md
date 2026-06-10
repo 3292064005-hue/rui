@@ -21,7 +21,8 @@
 ## 2. 运行方式
 
 ```bash
-cd ~/practice_ws
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
 roslaunch myrobot_description task_patrol.launch
@@ -79,7 +80,7 @@ task_evidence_recorder.py 记录轨迹、状态和结果
 
 | 话题 | 类型 | 说明 |
 |---|---|---|
-| `/patrol_status` | `std_msgs/String` | 巡点开始、到达、完成、超时等状态 |
+| `/navigation_status` | `std_msgs/String` | 正式巡航开始、到达、完成、超时等状态 |
 | `/recognition_result` | `std_msgs/String` | 每个识别区的识别结果 |
 | `/recognition_summary` | `std_msgs/String` | 敌军、友军、人质总数 |
 | `/task_trajectory` | `nav_msgs/Path` | 机器人运行轨迹 |
@@ -90,7 +91,7 @@ task_evidence_recorder.py 记录轨迹、状态和结果
 查看命令：
 
 ```bash
-rostopic echo /patrol_status
+rostopic echo /navigation_status
 rostopic echo /recognition_result
 rostopic echo /recognition_summary
 ```
@@ -107,13 +108,12 @@ config/task_params.yaml
 
 ### 5.1 巡点参数
 
-```yaml
-waypoints:
-  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
-  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
-  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
-  - {name: finish,         x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
-```
+正式 `task_patrol.launch` 使用
+`config/navigation_params.yaml` 中的 `navigation_goals`。不要在本文复制
+整条路线，以免文档与实际参数不同步。
+
+`config/task_params.yaml` 中的 `waypoints` 只供
+`task_patrol_simple.launch` 兼容使用。
 
 字段说明：
 
@@ -150,9 +150,9 @@ zones:
   ↓
 从 /camera/image_raw 获取最新画面
   ↓
-提取白底目标卡
+YOLO ONNX 整帧检测
   ↓
-用模板库匹配敌军 / 友军 / 人质
+宽画面重叠分块并统一 NMS
   ↓
 发布识别结果与汇总结果
 ```
@@ -254,19 +254,19 @@ rostopic echo /recognition_result
 rostopic echo /recognition_summary
 ```
 
-还需要检查相机与模板资源：
+还需要检查相机与正式权重：
 
 ```bash
 rostopic echo /camera/camera_info -n 1
 rostopic echo /camera/image_raw -n 1
+ls -lh $(rospack find myrobot_description)/recognition_weights/best.onnx
 ```
 
-可以适当增大识别区半径，或放宽图像识别参数：
+可以适当增大识别区半径，或调整模型置信度：
 
 ```yaml
 radius: 0.50
-min_card_area_px: 2500
-template_match_threshold: 0.60
+recognition_model_confidence: 0.40
 ```
 
 ### 9.3 任务日志没生成
@@ -291,7 +291,7 @@ roslaunch myrobot_description task_patrol.launch enable_evidence_recorder:=true
 
 1. Gazebo 中机器人能移动；
 2. RViz 中能看到机器人、轨迹和识别区标记；
-3. `/patrol_status` 持续输出状态；
+3. `/navigation_status` 持续输出状态；
 4. `/recognition_result` 输出两个识别区结果；
 5. `/recognition_summary` 输出累计结果；
 6. 任务结束后生成 `mission_summary.md`。

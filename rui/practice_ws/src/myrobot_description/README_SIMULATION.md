@@ -31,7 +31,8 @@ Gazebo 传感器
 ## 2. 一键启动完整仿真
 
 ```bash
-cd ~/practice_ws
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
 roslaunch myrobot_description full_simulation.launch

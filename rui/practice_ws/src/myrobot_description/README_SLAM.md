@@ -39,7 +39,8 @@ sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
 ## 3. 一键自动建图
 
 ```bash
-cd ~/practice_ws
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
 roslaunch myrobot_description slam_mapping.launch
@@ -89,7 +90,8 @@ roslaunch myrobot_description slam_mapping.launch autonomous_mapping:=false
 另开终端：
 
 ```bash
-source ~/practice_ws/devel/setup.bash
+source /opt/ros/noetic/setup.bash
+source /root/workspace/rui/rui/practice_ws/devel/setup.bash
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
@@ -108,7 +110,8 @@ angular.z  旋转
 当 RViz 中 `/map` 基本完整后，另开终端执行：
 
 ```bash
-source ~/practice_ws/devel/setup.bash
+source /opt/ros/noetic/setup.bash
+source /root/workspace/rui/rui/practice_ws/devel/setup.bash
 roslaunch myrobot_description save_slam_map.launch
 ```
 

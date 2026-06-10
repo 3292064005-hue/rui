@@ -10,6 +10,10 @@ rui/practice_ws/.catkin_tools/
 __pycache__/
 *.py[cod]
 
+# Temporary model exports; packaged weights live under recognition_weights/.
+/best*.onnx
+/best.pt
+
 # OS/editor noise
 .DS_Store
 Thumbs.db

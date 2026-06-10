@@ -21,9 +21,9 @@ roslaunch myrobot_description slam_mapping.launch
 
 验收：
 
-- `/map/info` 为 `275 × 225`、`0.02m`；
+- `/map/info` 为 `295 × 245`、约 `0.02m`；
 - 自动巡航读取 `navigation_params.yaml`；
-- 12 个点全部完成；
+- 默认完整巡航 3 圈；
 - 地图无旋转、重影和场外长射线。
 
 最终地图：
@@ -57,23 +57,27 @@ roslaunch myrobot_description task_patrol.launch
 - `/camera/image_raw` 有数据；
 - `/recognition_result` 包含检测明细和证据图片路径；
 - `/recognition_summary` 汇总两个区域；
-- 默认无权重时使用模板识别；
-- 配置 ONNX 权重后 `recognition_backend` 为 `onnx`。
+- 面板为不透明视觉物体，后墙不会从面板区域透出；
+- `recognition_backend` 为 `yolo_onnx`；
+- 区域 1 输出 `1 敌军 + 1 友军`；
+- 区域 2 输出 `2 敌军 + 1 人质`。
 
 ## 权重接口
 
 权重路径：
 
 ```text
-recognition_weights/soldier_classifier.onnx
+recognition_weights/best.pt
+recognition_weights/best.onnx
 ```
 
 参数：
 
 ```yaml
-recognition_backend: auto
-recognition_weights: recognition_weights/soldier_classifier.onnx
-recognition_model_labels: [enemy, friendly, hostage]
+recognition_backend: yolo_onnx
+recognition_weights: recognition_weights/best.onnx
+recognition_model_input_size: [640, 640]
+recognition_yolo_class_names: [renzhi, youjun, dijun]
 ```
 
 ## 任务证据
@@ -88,3 +92,6 @@ mission_summary.md
 recognition_frames/*_raw.jpg
 recognition_frames/*_annotated.jpg
 ```
+
+类别映射：`renzhi -> hostage`、`youjun -> friendly`、
+`dijun -> enemy`。

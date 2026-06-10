@@ -50,7 +50,8 @@ sudo apt install \
 ## 3. 启动导航栈，手动给目标
 
 ```bash
-cd ~/practice_ws
+cd /root/workspace/rui/rui/practice_ws
+source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
 roslaunch myrobot_description navigation.launch
@@ -118,15 +119,17 @@ roslaunch myrobot_description task_patrol.launch
 config/navigation_params.yaml
 ```
 
-示例：
+精简示例：
 
 ```yaml
 navigation_goals:
   - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
-  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
-  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
-  - {name: finish,         x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 0.1}
+  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 0.1}
+  - {name: finish,         x: 0.00, y:  0.00, yaw:  3.1416, hold: 0.1}
 ```
+
+完整的 12 个点只在 `config/navigation_params.yaml` 维护。
 
 字段说明：
 

@@ -4,13 +4,17 @@
 
 本项目面向 RAICOM 智能侦察仿真任务，基于 Ubuntu、ROS1 Noetic、
 Gazebo Classic 和 Python 实现四轮麦克纳姆机器人仿真系统。系统包含
-自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、固定边界
-栅格建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
+自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、`slam_toolbox`
+图优化建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
 敌军/友军/人质识别以及任务证据记录。
 
-机器人按照 `navigation_params.yaml` 中的 12 个目标点完成场地扫描和
-巡检。当前最终地图分辨率约 0.02m，地图尺寸为 295 × 245，原点为
-(-0.7, -4.2)。建图入口默认执行 3 圈巡航，以增加墙体观测次数。
+机器人正式巡检按照 `navigation_params.yaml` 中的 `start`、`zone_1`、
+`zone_2`、`finish` 4 个目标点执行；建图阶段使用
+`slam_navigation_params.yaml` 中的 12 个覆盖点完成场地扫描。当前默认
+SLAM 后端为 `slam_toolbox`，使用 `/scan_filtered`、
+`/odom` 和 TF 建立 pose graph，并通过 Ceres 优化与回环检测修正累计
+误差。仓库保留的最终导航地图分辨率约 0.02m，地图尺寸为 263 × 206，
+原点约为 (-0.488, -3.815)。
 
 ## 1. 任务理解
 
@@ -35,7 +39,7 @@ Gazebo 世界与机器人模型
   ├─ /imu/data
   └─ /joint_states
         ↓
-建图：odom_laser_mapper -> /map
+建图：slam_toolbox -> /map
 导航：map_server + AMCL + move_base
 巡检：move_base_waypoint_navigator
 识别：battlefield_recognition
@@ -49,7 +53,7 @@ Gazebo 世界与机器人模型
 | 机器人模型 | `urdf/turtlebot3_mecanum.urdf.xacro` |
 | Gazebo 场景 | `worlds/rm_map.world` |
 | 麦克纳姆仿真接口 | `scripts/mecanum_sim_driver.py` |
-| 建图 | `scripts/odom_laser_mapper.py` |
+| 建图 | `slam_toolbox`，参数见 `config/slam_toolbox_params.yaml` |
 | 导航巡点 | `scripts/move_base_waypoint_navigator.py` |
 | 图像识别 | `scripts/battlefield_recognition.py` |
 | 证据记录 | `scripts/task_evidence_recorder.py` |
@@ -73,33 +77,34 @@ wz：原地旋转角速度
 右后轮 = (vx - vy + (L + W)wz) / r
 ```
 
-其中 `r` 为轮半径，`L`、`W` 分别为半轴距和半轮距。项目导航控制采用
-“纯平移、停稳、原地转向”策略，移动时 `angular.z=0`，避免边走边转
-造成拐角振荡。
+其中 `r` 为轮半径，`L`、`W` 分别为半轴距和半轮距。正式巡航由
+`move_base` 调用 GlobalPlanner 和 DWAPlannerROS 闭环求解速度，允许横移与转向
+同时发生；建图阶段仍可使用低速直控巡航来积累观测。
 
 ## 4. SLAM 建图
 
 ### 4.1 问题分析
 
 传统 gmapping 在本场地的长直、重复走廊中可能产生错误 scan matching
-修正，表现为地图旋转、重影、假闭环和画布异常膨胀。Gazebo 平面驱动
-已经提供接近真值的里程计，因此项目默认采用仿真专用建图后端。
+修正，表现为地图旋转、重影、假闭环和画布异常膨胀。项目现在默认采用
+`slam_toolbox`，用 pose graph、回环检测和 Ceres 优化替代单纯逐帧匹配。
 
 ### 4.2 建图算法
 
-`odom_laser_mapper.py` 使用 `odom -> base_scan` 的 TF 将激光回波投影到
-固定栅格：
+`slam_toolbox` 使用 `odom -> base_scan` 的 TF 和 `/scan_filtered` 激光建立
+2D 位姿图：
 
-1. Bresenham 射线经过位置更新为空闲区域；
-2. 有限激光端点更新为占据区域；
-3. 无回波不向场地外延伸；
-4. 使用 3 × 3 闭运算连接一像素墙缝；
-5. 删除面积小于 8 个栅格的孤立噪点；
-6. 固定地图范围和分辨率，避免动态画布膨胀。
+1. 根据里程计预测和激光匹配生成节点约束；
+2. 对相邻激光帧建立局部匹配边；
+3. 在重复巡航时搜索回环约束；
+4. 使用 Ceres 求解全局位姿图；
+5. 按 0.02m 分辨率发布 `/map`；
+6. 使用 `/scan_filtered` 去掉车体近场回波，降低假障碍。
 
-传统 gmapping 仍可通过以下命令用于对照：
+仿真专用固定边界 mapper 和传统 gmapping 仍可作为对照：
 
 ```bash
+roslaunch myrobot_description slam_mapping.launch mapping_backend:=odom_laser
 roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
 ```
 
@@ -107,11 +112,14 @@ roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
 
 | 指标 | 结果 |
 |---|---:|
-| 地图尺寸 | 295 × 245 |
+| 默认后端 | slam_toolbox |
+| 地图尺寸 | 263 × 206 |
 | 分辨率 | 约 0.02m |
-| 原点 | (-0.7, -4.2) |
-| 单圈导航目标 | 12 |
+| 原点 | 约 (-0.488, -3.815) |
+| 建图单圈目标 | 12 |
+| 正式巡航目标 | 4 |
 | 默认建图巡航 | 3 圈 |
+| 回环优化 | 开启 |
 | 导航地图 | `raicom_slam_map_final.yaml` |
 
 最终地图：
@@ -125,15 +133,15 @@ src/myrobot_description/maps/raicom_slam_map_final.yaml
 
 ## 5. 自主导航与巡检
 
-导航链路由 `map_server + AMCL + move_base` 构成。目标点保存在
-`config/navigation_params.yaml`。自定义巡点节点首先调用 Navfn 获取全局
-路径，再使用全向路径跟随器输出 `linear.x` 和 `linear.y`。到达位置容差
-后持续确认多个周期，随后停车并单独执行角度调整。
+导航链路由 `map_server + AMCL + move_base` 构成。正式目标点保存在
+`config/navigation_params.yaml`。自定义巡点节点只负责按顺序发送
+`move_base` action goal，路径和速度由 GlobalPlanner 与 DWAPlannerROS
+共同求解，平移和转向可以同时发生。
 
 该策略具有以下特点：
 
 - 支持麦克纳姆横移；
-- 不在平移时旋转；
+- 平移和转向由局部规划器同时优化；
 - 到点判定包含稳定周期，避免提前跳到下一点；
 - 支持失败重试和代价地图清理；
 - 通过 `/navigation_status` 发布结构化 JSON 状态。
@@ -230,16 +238,17 @@ rostopic echo /recognition_summary
 
 ## 9. 创新点
 
-1. 针对仿真重复走廊设计固定边界里程计激光建图，避免 gmapping 假闭环；
-2. 麦克纳姆导航采用全向平移与原地转向解耦控制；
+1. 将默认 SLAM 升级为 `slam_toolbox` 图优化建图，支持回环检测和 Ceres 优化；
+2. 麦克纳姆正式巡航采用 DWA 全向局部规划，平移与转向联合优化；
 3. YOLO 整帧与重叠分块推理兼顾单目标和宽画面多目标；
 4. 建图、导航、识别和证据日志形成完整可追溯任务链。
 
 ## 10. 后续工作
 
-- 增加亮度、视角和遮挡增强，提高识别鲁棒性；
-- 增加独立测试集混淆矩阵、准确率和召回率；
-- 根据比赛现场机器性能调整模型尺寸和推理频率。
+- 录制 rosbag 后离线比较 `slam_toolbox`、`odom_laser` 和 `gmapping` 的地图误差；
+- 增加自动地图质量评分，例如边界完整度、走廊误占据率和闭环残差；
+- 根据比赛现场机器性能调整 `slam_toolbox` 同步/异步模式和回环阈值；
+- 增加独立识别测试集混淆矩阵、准确率和召回率。
 
 ## 11. 演示命令
 

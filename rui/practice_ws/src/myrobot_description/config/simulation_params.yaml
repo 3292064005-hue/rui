@@ -9,7 +9,7 @@ wheel_speed_topic: /mecanum_wheel_speeds
 odom_topic: /sim_driver/odom
 base_frame: base_footprint
 odom_frame: odom
-joint_state_rate: 50.0
+joint_state_rate: 30.0
 cmd_vel_timeout: 0.5
 max_wheel_angular_speed: 110.0
 publish_joint_states: true

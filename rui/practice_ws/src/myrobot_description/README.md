@@ -17,7 +17,7 @@
 | 激光雷达 | 已完成 | 发布 `/scan` |
 | 相机 | 已完成 | 发布 `/camera/image_raw` 和 `/camera/camera_info` |
 | IMU | 已完成 | 发布 `/imu/data` |
-| SLAM 建图 | 已完成 | 默认固定边界里程计激光建图，可选 gmapping |
+| SLAM 建图 | 已完成 | 默认 `slam_toolbox` 图优化建图，可选 `odom_laser`、`gmapping` 对比 |
 | 地图保存 | 已完成 | 保存 `.pgm` 和 `.yaml` |
 | 自主导航 | 已完成 | `map_server + AMCL + move_base` |
 | 自动巡点 | 已完成 | 默认使用 `move_base` 顺序执行导航目标点 |
@@ -52,8 +52,10 @@ myrobot_description/
 ├── config/
 │   ├── simulation_params.yaml         # 仿真轮子驱动参数
 │   ├── task_params.yaml               # 巡点和识别区参数
-│   ├── slam_gmapping_params.yaml      # gmapping 参数
-│   ├── navigation_params.yaml         # 自主导航目标点
+│   ├── slam_toolbox_params.yaml       # 默认 slam_toolbox 参数
+│   ├── slam_gmapping_params.yaml      # gmapping 对比参数
+│   ├── navigation_params.yaml         # 正式自主导航 4 点路线
+│   ├── slam_navigation_params.yaml    # SLAM 建图 12 点路线
 │   ├── amcl_params.yaml               # AMCL 参数
 │   ├── move_base_params.yaml          # move_base 参数
 │   ├── costmap_common_params.yaml     # 代价地图通用参数
@@ -71,7 +73,7 @@ myrobot_description/
 │   ├── simulation_status_monitor.py   # 仿真话题健康监控
 │   ├── patrol_navigator.py            # /cmd_vel 巡点控制
 │   ├── battlefield_recognition.py     # 识别区结果输出
-│   ├── odom_laser_mapper.py           # 默认固定边界栅格建图
+│   ├── odom_laser_mapper.py           # 仿真专用固定边界建图对比后端
 │   ├── task_evidence_recorder.py      # 任务证据记录
 │   ├── slam_status_monitor.py         # SLAM 状态监控
 │   ├── save_slam_map.py               # 保存 /map
@@ -172,7 +174,7 @@ roslaunch myrobot_description autonomous_navigation.launch
 ```text
 trajectory.csv              # 机器人轨迹
 recognition_results.jsonl   # 识别区结果
-patrol_status.jsonl         # 巡点或导航状态
+patrol_status.jsonl         # 状态事件日志；默认记录 /navigation_status
 mission_summary.md          # 任务总结
 ```
 

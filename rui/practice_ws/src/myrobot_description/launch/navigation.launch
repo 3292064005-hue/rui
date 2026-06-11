@@ -5,6 +5,7 @@
       worlds/rm_map.world is not modified. The default map is generated from that world geometry.
     -->
     <arg name="map_file" default="$(find myrobot_description)/maps/raicom_slam_map_final.yaml" />
+    <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
     <arg name="world_name" default="$(find myrobot_description)/worlds/rm_map.world" />
     <arg name="launch_rviz" default="true" />
     <arg name="gui" default="true" />
@@ -79,12 +80,22 @@
           type="move_base"
           name="move_base"
           output="screen">
+        <remap from="cmd_vel" to="/cmd_vel_raw" />
         <rosparam command="load" file="$(find myrobot_description)/config/move_base_params.yaml" />
         <rosparam command="load" file="$(find myrobot_description)/config/base_local_planner_params.yaml" />
         <rosparam command="load" file="$(find myrobot_description)/config/costmap_common_params.yaml" ns="global_costmap" />
         <rosparam command="load" file="$(find myrobot_description)/config/costmap_common_params.yaml" ns="local_costmap" />
         <rosparam command="load" file="$(find myrobot_description)/config/global_costmap_params.yaml" />
         <rosparam command="load" file="$(find myrobot_description)/config/local_costmap_params.yaml" />
+    </node>
+
+    <node pkg="myrobot_description"
+          type="cmd_vel_target_yaw_filter.py"
+          name="cmd_vel_target_yaw_filter"
+          output="screen">
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="input_cmd_vel_topic" value="/cmd_vel_raw" />
+        <param name="output_cmd_vel_topic" value="/cmd_vel" />
     </node>
 
     <node if="$(arg enable_health_monitor)"

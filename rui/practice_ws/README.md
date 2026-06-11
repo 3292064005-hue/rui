@@ -17,7 +17,7 @@ practice_ws/
     └── myrobot_description/
         ├── README.md                 # 包级总说明
         ├── README_SIMULATION.md      # Gazebo 仿真接口说明
-        ├── README_SLAM.md            # gmapping 建图说明
+        ├── README_SLAM.md            # slam_toolbox 建图与对比后端说明
         ├── README_NAVIGATION.md      # AMCL + move_base 自主导航说明
         ├── README_TASK.md            # 巡检识别任务说明
         ├── launch/                   # 启动文件
@@ -51,6 +51,7 @@ sudo apt install \
   ros-$ROS_DISTRO-amcl \
   ros-$ROS_DISTRO-move-base \
   ros-$ROS_DISTRO-navigation \
+  ros-$ROS_DISTRO-slam-toolbox \
   ros-$ROS_DISTRO-slam-gmapping \
   ros-$ROS_DISTRO-cv-bridge \
   python3-opencv \
@@ -188,8 +189,9 @@ rosrun myrobot_description latest_mission_summary.py
 | 要修改的内容 | 文件 |
 |---|---|
 | 正式巡航目标点 | `src/myrobot_description/config/navigation_params.yaml` |
+| 建图巡航目标点 | `src/myrobot_description/config/slam_navigation_params.yaml` |
 | 识别区、识别模型参数 | `src/myrobot_description/config/task_params.yaml` |
-| SLAM 参数 | `src/myrobot_description/launch/slam_mapping.launch`、`config/slam_gmapping_params.yaml` |
+| SLAM 参数 | `src/myrobot_description/config/slam_toolbox_params.yaml`、`src/myrobot_description/launch/slam_mapping.launch` |
 | 兵人识别权重 | `src/myrobot_description/recognition_weights/` |
 | AMCL 参数 | `src/myrobot_description/config/amcl_params.yaml` |
 | move_base 参数 | `src/myrobot_description/config/move_base_params.yaml` |

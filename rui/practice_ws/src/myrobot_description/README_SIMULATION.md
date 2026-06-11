@@ -86,7 +86,7 @@ roslaunch myrobot_description full_simulation.launch start_test_motion:=true
 | 控制输入 | `/cmd_vel` | `geometry_msgs/Twist` | 底盘速度输入，支持 x、y、yaw |
 | 里程计 | `/odom` | `nav_msgs/Odometry` | Gazebo 底盘插件发布 |
 | 轮子关节 | `/joint_states` | `sensor_msgs/JointState` | 四个轮子的角度和角速度 |
-| 轮速 | `/mecanum_wheel_speeds` | `std_msgs/Float64MultiArray` | 顺序为 LF、RF、LR、RR |
+| 轮速 | `/mecanum_wheel_speeds` | `std_msgs/Float32MultiArray` | 顺序为 LF、RF、LR、RR |
 | 雷达 | `/scan` | `sensor_msgs/LaserScan` | 360° 激光雷达 |
 | 相机图像 | `/camera/image_raw` | `sensor_msgs/Image` | RGB 图像 |
 | 相机参数 | `/camera/camera_info` | `sensor_msgs/CameraInfo` | 相机内参 |

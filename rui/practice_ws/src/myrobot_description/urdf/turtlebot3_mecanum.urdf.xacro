@@ -329,7 +329,7 @@
       <odometryTopic>odom</odometryTopic>
       <odometryFrame>odom</odometryFrame>
       <robotBaseFrame>base_footprint</robotBaseFrame>
-      <odometryRate>50.0</odometryRate>
+      <odometryRate>30.0</odometryRate>
       <publishOdometryTf>true</publishOdometryTf>
     </plugin>
   </gazebo>

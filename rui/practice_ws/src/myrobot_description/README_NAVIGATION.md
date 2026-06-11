@@ -15,7 +15,9 @@ map_server 加载静态地图
   ↓
 AMCL 使用 /scan + /odom 进行定位
   ↓
-move_base 进行全局路径规划和局部避障
+move_base 进行全局路径规划和局部平移避障
+  ↓
+cmd_vel_target_yaw_filter.py 保留平移速度并按当前目标点 yaw 重写角速度
   ↓
 move_base_waypoint_navigator.py 顺序发送目标点
   ↓
@@ -119,17 +121,18 @@ roslaunch myrobot_description task_patrol.launch
 config/navigation_params.yaml
 ```
 
-精简示例：
+当前正式路线：
 
 ```yaml
 navigation_goals:
-  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: -1.5708, hold: 0.1}
-  - {name: zone_1,         x: 0.52, y: -2.55, yaw:  0.0000, hold: 0.1}
-  - {name: zone_2,         x: 4.45, y: -1.65, yaw:  3.1416, hold: 0.1}
-  - {name: finish,         x: 0.00, y:  0.00, yaw:  3.1416, hold: 0.1}
+  - {name: start,  x: 0.00, y: -0.00, yaw: -1.5708, hold: 0.1}
+  - {name: zone_1, x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
+  - {name: finish, x: 0.00, y: -0.00, yaw:  3.1416, hold: 0.1}
 ```
 
-完整的 12 个点只在 `config/navigation_params.yaml` 维护。
+正式巡航默认只保留 `start`、`zone_1`、`zone_2`、`finish` 4 个点。
+建图覆盖路线单独维护在 `config/slam_navigation_params.yaml`。
 
 字段说明：
 
@@ -140,7 +143,15 @@ navigation_goals:
 | `yaw` | 目标朝向，单位 rad |
 | `hold` | 到达后停留时间，单位 s |
 
-建议保留中间过渡点，不要让机器人一次性跨越复杂通道或墙体。
+正式巡航由 GlobalPlanner 和 DWAPlannerROS 规划路径和平移避障，`cmd_vel_target_yaw_filter.py`
+保留 DWA 输出的 `linear.x/y`，把 `angular.z` 改为朝当前目标点 `yaw` 收敛。
+因此小车在路上就会转向目标点规定的车头朝向，车头不再强制对准导航路线。
+DWA 的 `forward_point_distance` 设为 0，让 `base_footprint` 原点跟踪路径；
+局部规划通过较低 `path_distance_bias` 和较高 `occdist_scale` 优先保持离墙余量。
+最大平移速度在 `config/base_local_planner_params.yaml` 中配置。
+DWA 的 `yaw_goal_tolerance` 故意放宽到接近 pi，避免它在终点进入原地旋转判碰撞；
+目标朝向由过滤节点负责。
+只有建图路线保留中间过渡点。
 
 ---
 

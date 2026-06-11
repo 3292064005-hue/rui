@@ -63,7 +63,7 @@ sudo apt install ros-$ROS_DISTRO-cv-bridge python3-opencv
   ↓
 map_server + AMCL + move_base
   ↓
-move_base_waypoint_navigator.py 按 navigation_params.yaml 顺序发目标
+move_base_waypoint_navigator.py 按 navigation_params.yaml 顺序发送 move_base 目标
   ↓
 机器人进入识别区并停稳
   ↓
@@ -109,8 +109,9 @@ config/task_params.yaml
 ### 5.1 巡点参数
 
 正式 `task_patrol.launch` 使用
-`config/navigation_params.yaml` 中的 `navigation_goals`。不要在本文复制
-整条路线，以免文档与实际参数不同步。
+`config/navigation_params.yaml` 中的 4 个 `navigation_goals`：
+`start`、`zone_1`、`zone_2`、`finish`。建图巡航路线单独维护在
+`config/slam_navigation_params.yaml`。
 
 `config/task_params.yaml` 中的 `waypoints` 只供
 `task_patrol_simple.launch` 兼容使用。

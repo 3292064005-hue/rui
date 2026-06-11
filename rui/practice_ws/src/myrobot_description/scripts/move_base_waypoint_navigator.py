@@ -18,7 +18,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped, Twist
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
-from std_msgs.msg import String
+from std_msgs.msg import Float32, String
 from std_srvs.srv import Empty
 
 
@@ -73,6 +73,8 @@ class MoveBaseWaypointNavigator(object):
         self.action_name = rospy.get_param('~move_base_action', '/move_base')
         self.status_topic = rospy.get_param('~navigation_status_topic', '/navigation_status')
         self.patrol_status_topic = rospy.get_param('~patrol_status_topic', self.status_topic)
+        self.target_yaw_topic = rospy.get_param(
+            '~navigation_target_yaw_topic', '/navigation_target_yaw')
         self.frame_id = rospy.get_param('~navigation_goal_frame', 'map')
         self.goal_timeout = float(rospy.get_param('~navigation_goal_timeout', 90.0))
         self.server_timeout = float(rospy.get_param('~navigation_server_timeout', 30.0))
@@ -93,8 +95,18 @@ class MoveBaseWaypointNavigator(object):
         self.rotation_tolerance = float(rospy.get_param('~navigation_rotation_tolerance', 0.08))
         self.rotation_timeout = float(rospy.get_param('~navigation_rotation_timeout', 20.0))
         self.stop_duration = float(rospy.get_param('~navigation_stop_duration', 0.35))
+        self.skip_reached_goal_distance = float(
+            rospy.get_param('~navigation_skip_reached_goal_distance', 0.22))
         self.use_holonomic_follower = bool(
             rospy.get_param('~navigation_use_holonomic_path_follower', True))
+        self.use_plan_subgoals = bool(
+            rospy.get_param('~navigation_use_plan_subgoals', False))
+        self.plan_subgoal_spacing = float(
+            rospy.get_param('~navigation_plan_subgoal_spacing', 0.65))
+        self.plan_subgoal_timeout = float(
+            rospy.get_param('~navigation_plan_subgoal_timeout', 30.0))
+        self.plan_subgoal_tolerance = float(
+            rospy.get_param('~navigation_plan_subgoal_tolerance', 0.12))
         self.use_direct_path = bool(
             rospy.get_param('~navigation_use_direct_path', False))
         self.make_plan_service_name = rospy.get_param(
@@ -127,6 +139,8 @@ class MoveBaseWaypointNavigator(object):
             self.patrol_status_pub = rospy.Publisher(self.patrol_status_topic, String, queue_size=20, latch=True)
         else:
             self.patrol_status_pub = self.status_pub
+        self.target_yaw_pub = rospy.Publisher(
+            self.target_yaw_topic, Float32, queue_size=5, latch=True)
         self.cmd_pub = rospy.Publisher(self.cmd_vel_topic, Twist, queue_size=1)
         self.client = actionlib.SimpleActionClient(self.action_name, MoveBaseAction)
         self.tf_listener = tf.TransformListener()
@@ -150,7 +164,7 @@ class MoveBaseWaypointNavigator(object):
             self.clear_costmaps = None
 
     def _setup_make_plan(self):
-        if not self.use_holonomic_follower:
+        if not self.use_holonomic_follower and not self.use_plan_subgoals:
             return
         try:
             rospy.wait_for_service(self.make_plan_service_name, timeout=8.0)
@@ -161,6 +175,8 @@ class MoveBaseWaypointNavigator(object):
             raise rospy.ROSException('make_plan service unavailable: %s' % exc)
 
     def _publish_status(self, event, goal=None, index=None, attempt=None, state=None, text=None):
+        if goal is not None:
+            self._publish_target_yaw(goal)
         payload = {
             'event': event,
             'stamp': rospy.Time.now().to_sec(),
@@ -193,6 +209,12 @@ class MoveBaseWaypointNavigator(object):
         self.status_pub.publish(msg)
         if self.patrol_status_pub is not self.status_pub:
             self.patrol_status_pub.publish(msg)
+
+    def _publish_target_yaw(self, goal):
+        try:
+            self.target_yaw_pub.publish(Float32(data=float(goal['yaw'])))
+        except Exception:
+            pass
 
     def _goal_hold(self, item):
         if self.ignore_goal_hold:
@@ -306,6 +328,16 @@ class MoveBaseWaypointNavigator(object):
         pose.pose.orientation.w = qw
         return pose
 
+    def _pose_to_item(self, pose, name, yaw):
+        return {
+            'name': name,
+            'x': float(pose.pose.position.x),
+            'y': float(pose.pose.position.y),
+            'yaw': float(yaw),
+            'hold': 0.0,
+            'direct_path': False,
+        }
+
     def _request_plan(self, pose, item):
         if self.use_direct_path or item.get('direct_path', False):
             return [
@@ -325,6 +357,61 @@ class MoveBaseWaypointNavigator(object):
                 2.0, 'move_base_waypoint_navigator: make_plan failed: %s', exc)
             return []
 
+    def _plan_subgoals(self, item):
+        if not self.use_plan_subgoals or self.use_direct_path:
+            return [item]
+        pose = self._current_pose()
+        if pose is None:
+            return [item]
+        plan = self._request_plan(pose, item)
+        if len(plan) < 2:
+            return [item]
+
+        spacing = max(0.20, self.plan_subgoal_spacing)
+        subgoals = []
+        last_x = plan[0].pose.position.x
+        last_y = plan[0].pose.position.y
+        distance_since_subgoal = 0.0
+        subgoal_index = 1
+        for pose_stamped in plan[1:-1]:
+            x = pose_stamped.pose.position.x
+            y = pose_stamped.pose.position.y
+            distance_since_subgoal += math.hypot(x - last_x, y - last_y)
+            last_x, last_y = x, y
+            if distance_since_subgoal >= spacing:
+                subgoals.append(self._pose_to_item(
+                    pose_stamped, '%s_via_%02d' % (item['name'], subgoal_index),
+                    pose[2]))
+                subgoal_index += 1
+                distance_since_subgoal = 0.0
+
+        subgoals.append(item)
+        rospy.loginfo(
+            'move_base_waypoint_navigator: split %s global plan into %d move_base goals',
+            item['name'], len(subgoals))
+        return subgoals
+
+    def _send_move_base_goal(self, item, timeout):
+        pose = self._current_pose()
+        move_base_yaw = pose[2] if pose is not None else 0.0
+        goal = self._make_goal(item, yaw=move_base_yaw)
+        self.client.send_goal(goal)
+        finished = self.client.wait_for_result(rospy.Duration(timeout))
+        if not finished:
+            self.client.cancel_goal()
+            self._stop_robot()
+            return False, None, 'move_base did not finish before timeout'
+        state = self.client.get_state()
+        result_text = self.client.get_goal_status_text()
+        return state == GoalStatus.SUCCEEDED, state, result_text
+
+    def _already_at_goal_xy(self, item):
+        pose = self._current_pose()
+        if pose is None:
+            return False
+        return math.hypot(item['x'] - pose[0], item['y'] - pose[1]) <= max(
+            self.translation_tolerance, self.skip_reached_goal_distance)
+
     def _path_target(self, plan, pose):
         if not plan:
             return None
@@ -340,7 +427,17 @@ class MoveBaseWaypointNavigator(object):
         end = plan[-1].pose.position
         return end.x, end.y
 
-    def _translation_cmd(self, pose, target, goal_distance):
+    def _target_yaw_speed(self, pose, item):
+        error = wrap_to_pi(float(item['yaw']) - pose[2])
+        if abs(error) <= self.rotation_tolerance:
+            return 0.0, abs(error)
+        speed = clamp(self.rotation_gain * error,
+                      -self.rotation_max_speed, self.rotation_max_speed)
+        if abs(speed) < self.rotation_min_speed:
+            speed = math.copysign(self.rotation_min_speed, error)
+        return speed, abs(error)
+
+    def _translation_cmd(self, pose, target, goal_distance, item):
         dx = target[0] - pose[0]
         dy = target[1] - pose[1]
         target_distance = math.hypot(dx, dy)
@@ -367,7 +464,7 @@ class MoveBaseWaypointNavigator(object):
         cmd = Twist()
         cmd.linear.x = vx_body * scale
         cmd.linear.y = vy_body * scale
-        cmd.angular.z = 0.0
+        cmd.angular.z = self._target_yaw_speed(pose, item)[0]
         return cmd
 
     def _follow_holonomic_path(self, item):
@@ -388,6 +485,13 @@ class MoveBaseWaypointNavigator(object):
 
             goal_distance = math.hypot(item['x'] - pose[0], item['y'] - pose[1])
             if goal_distance <= self.translation_tolerance:
+                cmd = Twist()
+                cmd.angular.z, yaw_error = self._target_yaw_speed(pose, item)
+                if yaw_error > self.rotation_tolerance:
+                    self.cmd_pub.publish(cmd)
+                    arrival_cycles = 0
+                    rate.sleep()
+                    continue
                 self._stop_robot()
                 arrival_cycles += 1
                 if arrival_cycles >= max(1, self.arrival_stable_cycles):
@@ -420,7 +524,7 @@ class MoveBaseWaypointNavigator(object):
                 self._stop_robot()
             else:
                 self.cmd_pub.publish(
-                    self._translation_cmd(pose, target, goal_distance))
+                    self._translation_cmd(pose, target, goal_distance, item))
 
             if (now - last_progress_time).to_sec() >= self.stuck_timeout:
                 self._stop_and_settle()
@@ -440,11 +544,18 @@ class MoveBaseWaypointNavigator(object):
             if attempt > 1:
                 self._clear_costmaps()
                 rospy.sleep(0.5)
-            rospy.loginfo(
-                'move_base_waypoint_navigator: holonomic goal %d/%d attempt %d: '
-                '%s -> %.2f %.2f, then rotate to %.2f',
-                index + 1, len(self.goals) * self.patrol_repeats, attempt, item['name'],
-                item['x'], item['y'], item['yaw'])
+            if self.separate_rotation:
+                rospy.loginfo(
+                    'move_base_waypoint_navigator: holonomic goal %d/%d attempt %d: '
+                    '%s -> %.2f %.2f, target yaw %.2f',
+                    index + 1, len(self.goals) * self.patrol_repeats, attempt,
+                    item['name'], item['x'], item['y'], item['yaw'])
+            else:
+                rospy.loginfo(
+                    'move_base_waypoint_navigator: holonomic goal %d/%d attempt %d: '
+                    '%s -> %.2f %.2f %.2f',
+                    index + 1, len(self.goals) * self.patrol_repeats, attempt,
+                    item['name'], item['x'], item['y'], item['yaw'])
             self._publish_status('target_started', goal=item, index=index, attempt=attempt)
             if not self._follow_holonomic_path(item):
                 if rospy.is_shutdown():
@@ -463,9 +574,9 @@ class MoveBaseWaypointNavigator(object):
                 'waypoint_reached', goal=item, index=index, attempt=attempt,
                 state=GoalStatus.SUCCEEDED,
                 text=(
-                    'direct odometry path followed with separate in-place rotation'
+                    'direct odometry path followed'
                     if self.use_direct_path or item.get('direct_path', False)
-                    else 'Navfn path followed with separate in-place rotation'))
+                    else 'Navfn path followed'))
             hold = self._goal_hold(item)
             if hold > 0.0:
                 rospy.sleep(hold)
@@ -494,38 +605,60 @@ class MoveBaseWaypointNavigator(object):
                           index + 1, len(self.goals) * self.patrol_repeats,
                           attempt, item['name'], item['x'], item['y'], item['yaw'])
             self._publish_status('target_started', goal=item, index=index, attempt=attempt)
-            translation_yaw = self._wait_for_current_yaw()
-            if translation_yaw is None:
-                translation_yaw = item['yaw']
-                rospy.logwarn('move_base_waypoint_navigator: current map yaw unavailable; using goal yaw')
-            self.client.send_goal(self._make_goal(item, yaw=translation_yaw))
-            finished = self.client.wait_for_result(rospy.Duration(self.goal_timeout))
-            if not finished:
-                self.client.cancel_goal()
-                self._stop_robot()
-                if rospy.is_shutdown():
-                    return False
-                self._publish_status('goal_timeout', goal=item, index=index, attempt=attempt,
-                                     text='move_base did not finish before timeout')
-                rospy.logwarn('move_base_waypoint_navigator: timeout at %s', item['name'])
-                continue
-            state = self.client.get_state()
-            result_text = self.client.get_goal_status_text()
-            if state == GoalStatus.SUCCEEDED:
+            if self._already_at_goal_xy(item):
+                rospy.loginfo(
+                    'move_base_waypoint_navigator: %s already within xy tolerance; skipping move_base goal',
+                    item['name'])
+                self._publish_status(
+                    'waypoint_reached', goal=item, index=index, attempt=attempt,
+                    state=GoalStatus.SUCCEEDED,
+                    text='already within xy tolerance; skipped move_base goal')
+                hold = self._goal_hold(item)
+                if hold > 0.0:
+                    rospy.sleep(hold)
+                return True
+            subgoals = self._plan_subgoals(item)
+            failed_subgoal = None
+            result_text = ''
+            state = GoalStatus.SUCCEEDED
+            for subgoal_index, subgoal in enumerate(subgoals):
+                final_goal = subgoal_index == len(subgoals) - 1
+                timeout = self.goal_timeout if final_goal else self.plan_subgoal_timeout
+                ok, state, result_text = self._send_move_base_goal(subgoal, timeout)
+                if not ok:
+                    failed_subgoal = subgoal
+                    break
+            if failed_subgoal is None:
                 self._stop_and_settle()
                 if self.separate_rotation and not self._rotate_to_yaw(item, index, attempt):
                     if rospy.is_shutdown():
                         return False
                     continue
-                self._publish_status('waypoint_reached', goal=item, index=index, attempt=attempt, state=state, text=result_text)
+                if not result_text:
+                    result_text = (
+                        'move_base reached goal with coupled translation and rotation')
+                self._publish_status('waypoint_reached', goal=item, index=index,
+                                     attempt=attempt, state=state,
+                                     text=result_text)
                 hold = self._goal_hold(item)
                 if hold > 0.0:
                     rospy.sleep(hold)
                 return True
+            if state is None:
+                self._publish_status(
+                    'goal_timeout', goal=item, index=index, attempt=attempt,
+                    text='%s at %s' % (result_text, failed_subgoal['name']))
+                rospy.logwarn('move_base_waypoint_navigator: timeout at %s via %s',
+                              item['name'], failed_subgoal['name'])
+                continue
             self._stop_robot()
-            self._publish_status('goal_failed', goal=item, index=index, attempt=attempt, state=state, text=result_text)
-            rospy.logwarn('move_base_waypoint_navigator: goal %s failed with state=%s text=%s',
-                          item['name'], GoalStatus.to_string(state), result_text)
+            self._publish_status(
+                'goal_failed', goal=item, index=index, attempt=attempt,
+                state=state, text='%s at %s' % (result_text, failed_subgoal['name']))
+            rospy.logwarn(
+                'move_base_waypoint_navigator: goal %s failed via %s with state=%s text=%s',
+                item['name'], failed_subgoal['name'],
+                GoalStatus.to_string(state), result_text)
         return False
 
     def run(self):

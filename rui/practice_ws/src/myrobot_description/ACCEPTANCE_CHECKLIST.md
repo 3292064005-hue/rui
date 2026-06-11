@@ -21,9 +21,10 @@ roslaunch myrobot_description slam_mapping.launch
 
 验收：
 
-- `/map/info` 为 `295 × 245`、约 `0.02m`；
-- 自动巡航读取 `navigation_params.yaml`；
+- `/map/info` 分辨率约 `0.02m`，地图结构完整；
+- 自动建图巡航读取 `slam_navigation_params.yaml`；
 - 默认完整巡航 3 圈；
+- 默认建图节点为 `/slam_toolbox`；
 - 地图无旋转、重影和场外长射线。
 
 最终地图：
@@ -43,7 +44,7 @@ roslaunch myrobot_description autonomous_navigation.launch
 
 - `map_server`、`amcl`、`move_base` 存活；
 - `/amcl_pose` 有效；
-- 平移时不旋转，到点后原地调整方向；
+- 全局规划器和局部规划器共同处理平移与转向；
 - `/navigation_status` 最终输出 `patrol_completed`。
 
 ## 图像识别

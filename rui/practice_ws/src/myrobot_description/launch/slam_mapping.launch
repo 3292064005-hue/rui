@@ -2,6 +2,7 @@
     <!--
       SLAM mapping launch file.
       Gazebo loads rm_map.world and builds /map from filtered laser scans and odometry.
+      Default backend is slam_toolbox for pose-graph SLAM with loop closure.
     -->
     <arg name="launch_rviz" default="true" />
     <arg name="gui" default="true" />
@@ -9,12 +10,14 @@
     <arg name="autonomous_mapping" default="true" />
     <arg name="record_trajectory" default="true" />
     <arg name="enable_slam_monitor" default="true" />
-    <arg name="mapping_backend" default="odom_laser" />
+    <arg name="mapping_backend" default="slam_toolbox" />
     <arg name="patrol_repeats" default="3" />
 
     <arg name="params" default="$(find myrobot_description)/config/task_params.yaml" />
-    <arg name="nav_params" default="$(find myrobot_description)/config/navigation_params.yaml" />
-    <arg name="slam_params" default="$(find myrobot_description)/config/slam_gmapping_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_description)/config/slam_navigation_params.yaml" />
+    <arg name="slam_params" default="$(find myrobot_description)/config/slam_toolbox_params.yaml" />
+    <arg name="gmapping_params" default="$(find myrobot_description)/config/slam_gmapping_params.yaml" />
+    <arg name="slam_toolbox_mode" default="async" />
     <arg name="rviz_config" default="$(find myrobot_description)/config/slam.rviz" />
 
     <arg name="scan_topic" default="/scan_filtered" />
@@ -47,13 +50,37 @@
         <param name="min_valid_range" value="0.22" />
     </node>
 
+    <node if="$(eval arg('mapping_backend') == 'slam_toolbox' and arg('slam_toolbox_mode') == 'sync')"
+          pkg="slam_toolbox"
+          type="sync_slam_toolbox_node"
+          name="slam_toolbox"
+          output="screen">
+        <rosparam command="load" file="$(arg slam_params)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'slam_toolbox' and arg('slam_toolbox_mode') == 'async')"
+          pkg="slam_toolbox"
+          type="async_slam_toolbox_node"
+          name="slam_toolbox"
+          output="screen">
+        <rosparam command="load" file="$(arg slam_params)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
     <node if="$(eval arg('mapping_backend') == 'gmapping')"
           pkg="gmapping"
           type="slam_gmapping"
           name="slam_gmapping"
           output="screen">
         <remap from="scan" to="$(arg scan_topic)" />
-        <rosparam command="load" file="$(arg slam_params)" />
+        <rosparam command="load" file="$(arg gmapping_params)" />
         <param name="base_frame" value="$(arg base_frame)" />
         <param name="odom_frame" value="$(arg odom_frame)" />
         <param name="map_frame" value="$(arg map_frame)" />
@@ -121,7 +148,7 @@
         <param name="task_marker_topic" value="/task_markers" />
     </node>
 
-    <!-- Follow the user-defined navigation route while gmapping builds the first map. -->
+    <!-- Follow the user-defined navigation route while the selected SLAM backend builds the map. -->
     <node if="$(arg autonomous_mapping)"
           pkg="myrobot_description"
           type="move_base_waypoint_navigator.py"

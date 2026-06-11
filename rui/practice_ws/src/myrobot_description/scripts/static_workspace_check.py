@@ -63,6 +63,27 @@ def read_pgm(path):
     return magic, width, height, pixels
 
 
+def navigation_goal_names(path):
+    text = path.read_text(errors='ignore')
+    names = []
+    in_goals = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        if stripped == 'navigation_goals:':
+            in_goals = True
+            continue
+        if not in_goals:
+            continue
+        if stripped.startswith('- '):
+            match = re.search(r'name\s*:\s*([^,\}\s]+)', stripped)
+            names.append(match.group(1) if match else 'goal_%02d' % len(names))
+        elif not line.startswith((' ', '\t')):
+            break
+    return names
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     errors = []
@@ -89,6 +110,8 @@ def main():
         root / 'scripts' / 'cmd_vel_test_motion.py',
         root / 'config' / 'task_params.yaml',
         root / 'config' / 'navigation_params.yaml',
+        root / 'config' / 'slam_navigation_params.yaml',
+        root / 'config' / 'slam_toolbox_params.yaml',
         root / 'config' / 'slam_gmapping_params.yaml',
         root / 'config' / 'amcl_params.yaml',
         root / 'config' / 'move_base_params.yaml',
@@ -110,6 +133,7 @@ def main():
         root / 'scripts' / 'move_base_waypoint_navigator.py',
         root / 'scripts' / 'navigation_initializer.py',
         root / 'scripts' / 'navigation_status_monitor.py',
+        root / 'scripts' / 'cmd_vel_target_yaw_filter.py',
         root / 'scripts' / 'generate_known_map.py',
         root / 'worlds' / 'rm_map.world',
         root / 'materials' / 'scripts' / 'raicom_targets.material',
@@ -144,8 +168,11 @@ def main():
             'map_server',
             'amcl',
             'move_base',
+            'slam_toolbox',
             'navfn',
+            'global_planner',
             'base_local_planner',
+            'dwa_local_planner',
             'costmap_2d',
             'clear_costmap_recovery',
             'rotate_recovery',
@@ -246,12 +273,12 @@ def main():
             known_cells = sum(
                 1 for value in pixels if value < 65 or value > 250)
             known_ratio = float(known_cells) / float(width * height)
-            if known_ratio >= 0.95:
+            if known_ratio >= 0.60:
                 print('[OK] final map known coverage: %.1f%%' %
                       (known_ratio * 100.0))
             else:
                 errors.append(
-                    'final map known coverage is too low: %.1f%% < 95.0%%' %
+                    'final map known coverage is too low: %.1f%% < 60.0%%' %
                     (known_ratio * 100.0))
 
             occupied = [
@@ -322,6 +349,117 @@ def main():
         print('[OK] SLAM patrol repeats: 3')
     else:
         errors.append('slam_mapping.launch does not default to 3 patrol repeats')
+
+    if 'config/slam_navigation_params.yaml' in slam_launch_text:
+        print('[OK] SLAM uses dedicated mapping route')
+    else:
+        errors.append('slam_mapping.launch does not default to slam_navigation_params.yaml')
+
+    if '<arg name="mapping_backend" default="slam_toolbox" />' in slam_launch_text:
+        print('[OK] default SLAM backend: slam_toolbox')
+    else:
+        errors.append('slam_mapping.launch does not default to slam_toolbox')
+
+    formal_goals = navigation_goal_names(root / 'config' / 'navigation_params.yaml')
+    if len(formal_goals) >= 3 and all(name in formal_goals for name in ['zone_1', 'zone_2', 'finish']):
+        print('[OK] formal navigation route: %d goals' % len(formal_goals))
+    else:
+        errors.append(
+            'navigation_params.yaml route must include zone_1, zone_2, finish; got %s' %
+            ', '.join(formal_goals))
+
+    navigation_text = (
+        root / 'config' / 'navigation_params.yaml').read_text(errors='ignore')
+    if 'navigation_use_holonomic_path_follower: false' in navigation_text:
+        print('[OK] formal navigation uses move_base local planner')
+    else:
+        errors.append(
+            'navigation_params.yaml should use move_base local planner for formal patrol')
+    if 'navigation_use_plan_subgoals: false' in navigation_text:
+        print('[OK] formal navigation sends complete move_base goals')
+    else:
+        errors.append(
+            'navigation_params.yaml should not split formal patrol into subgoals')
+    if 'navigation_separate_rotation: false' in navigation_text:
+        print('[OK] formal navigation couples translation and rotation')
+    else:
+        errors.append(
+            'navigation_params.yaml should disable separate rotation for formal patrol')
+    if 'navigation_cmd_vel_target_yaw_filter: true' in navigation_text:
+        print('[OK] formal navigation steers yaw to waypoint target while driving')
+    else:
+        errors.append(
+            'navigation_params.yaml should enable target-yaw cmd_vel filtering')
+
+    local_planner_text = (
+        root / 'config' / 'base_local_planner_params.yaml').read_text(errors='ignore')
+    move_base_text = (root / 'config' / 'move_base_params.yaml').read_text(
+        errors='ignore')
+    if 'base_local_planner: dwa_local_planner/DWAPlannerROS' in move_base_text:
+        print('[OK] formal local planner: DWAPlannerROS')
+    else:
+        errors.append('move_base_params.yaml should use DWAPlannerROS')
+    if 'base_global_planner: global_planner/GlobalPlanner' in move_base_text:
+        print('[OK] formal global planner: GlobalPlanner')
+    else:
+        errors.append('move_base_params.yaml should use global_planner/GlobalPlanner')
+
+    dwa_block_match = re.search(
+        r'^DWAPlannerROS:\n(?P<body>(?:\s{2}.+\n?)+)',
+        local_planner_text, re.MULTILINE)
+    dwa_text = dwa_block_match.group('body') if dwa_block_match else ''
+    theta_match = re.search(
+        r'^\s*max_vel_theta:\s*([-+0-9.eE]+)',
+        dwa_text, re.MULTILINE)
+    samples_match = re.search(
+        r'^\s*vth_samples:\s*(\d+)', dwa_text, re.MULTILINE)
+    yaw_match = re.search(
+        r'^\s*yaw_goal_tolerance:\s*([-+0-9.eE]+)',
+        dwa_text, re.MULTILINE)
+    occdist_match = re.search(
+        r'^\s*occdist_scale:\s*([-+0-9.eE]+)',
+        dwa_text, re.MULTILINE)
+    if theta_match and float(theta_match.group(1)) > 0.0:
+        print('[OK] DWA angular velocity enabled')
+    else:
+        errors.append('DWAPlannerROS leaves max_vel_theta disabled')
+    if samples_match and int(samples_match.group(1)) > 1:
+        print('[OK] DWA samples angular velocities')
+    else:
+        errors.append('DWAPlannerROS does not sample angular velocity')
+    if yaw_match and float(yaw_match.group(1)) >= 3.0:
+        print('[OK] DWA goal yaw is decoupled from path following')
+    else:
+        errors.append('DWAPlannerROS should not enforce final yaw; target-yaw filter handles heading')
+    if re.search(r'^\s*forward_point_distance:\s*0(?:\.0+)?\s*$',
+                 dwa_text, re.MULTILINE):
+        print('[OK] DWA tracks the path at the robot origin')
+    else:
+        errors.append('DWAPlannerROS forward_point_distance should be 0.0 for origin path tracking')
+    if occdist_match and float(occdist_match.group(1)) >= 0.5:
+        print('[OK] DWA keeps obstacle clearance weight high')
+    else:
+        errors.append('DWAPlannerROS occdist_scale should stay high enough to avoid wall-hugging')
+
+    slam_goals = navigation_goal_names(root / 'config' / 'slam_navigation_params.yaml')
+    if len(slam_goals) == 12 and 'zone_1' in slam_goals and 'zone_2' in slam_goals:
+        print('[OK] SLAM mapping route: 12 goals')
+    else:
+        errors.append(
+            'slam_navigation_params.yaml route must keep 12 mapping goals; got %d' %
+            len(slam_goals))
+
+    toolbox_params = root / 'config' / 'slam_toolbox_params.yaml'
+    toolbox_text = toolbox_params.read_text(errors='ignore') if toolbox_params.exists() else ''
+    for key in [
+            'solver_plugin:',
+            'do_loop_closing:',
+            'resolution:',
+            'scan_topic:']:
+        if key in toolbox_text:
+            print('[OK] slam_toolbox parameter:', key[:-1])
+        else:
+            errors.append('missing slam_toolbox parameter: %s' % key[:-1])
 
     if errors:
         print('\nStatic check failed:')

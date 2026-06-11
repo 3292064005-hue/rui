@@ -22,6 +22,7 @@ class ScanSelfFilter(object):
         self.output_topic = rospy.get_param('~output_scan_topic', '/scan_filtered')
         self.min_valid_range = float(rospy.get_param('~min_valid_range', 0.18))
         self.keep_original_min = bool(rospy.get_param('~keep_original_min', True))
+        self.fix_angle_max = bool(rospy.get_param('~fix_angle_max', True))
 
         self.pub = rospy.Publisher(self.output_topic, LaserScan, queue_size=10)
         self.sub = rospy.Subscriber(self.input_topic, LaserScan, self._scan_cb, queue_size=10)
@@ -32,8 +33,12 @@ class ScanSelfFilter(object):
         filtered = LaserScan()
         filtered.header = msg.header
         filtered.angle_min = msg.angle_min
-        filtered.angle_max = msg.angle_max
         filtered.angle_increment = msg.angle_increment
+        if self.fix_angle_max and msg.ranges and msg.angle_increment > 0.0:
+            filtered.angle_max = (
+                msg.angle_min + msg.angle_increment * (len(msg.ranges) - 1))
+        else:
+            filtered.angle_max = msg.angle_max
         filtered.time_increment = msg.time_increment
         filtered.scan_time = msg.scan_time
         filtered.range_min = msg.range_min if self.keep_original_min else max(msg.range_min, self.min_valid_range)

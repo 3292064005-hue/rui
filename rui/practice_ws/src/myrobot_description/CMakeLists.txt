@@ -41,6 +41,7 @@ catkin_install_python(PROGRAMS
   scripts/navigation_status_monitor.py
   scripts/navigation_initializer.py
   scripts/move_base_waypoint_navigator.py
+  scripts/cmd_vel_target_yaw_filter.py
   scripts/generate_known_map.py
   scripts/cmd_vel_test_motion.py
   scripts/simulation_status_monitor.py

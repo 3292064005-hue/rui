@@ -191,7 +191,10 @@ class MecanumSimDriver(object):
         while not rospy.is_shutdown():
             now = rospy.Time.now()
             dt = max(0.0, (now - self._last_update).to_sec())
-            if dt <= 0.0 or dt > 1.0:
+            if dt <= 0.0:
+                rate.sleep()
+                continue
+            if dt > 1.0:
                 dt = 1.0 / max(self.rate_hz, 1.0)
             self._last_update = now
 

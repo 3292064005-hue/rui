@@ -143,13 +143,13 @@ navigation_goals:
 | `yaw` | 目标朝向，单位 rad |
 | `hold` | 到达后停留时间，单位 s |
 
-正式巡航由 GlobalPlanner 和 DWAPlannerROS 规划路径和平移避障，`cmd_vel_target_yaw_filter.py`
-保留 DWA 输出的 `linear.x/y`，把 `angular.z` 改为朝当前目标点 `yaw` 收敛。
+正式巡航由 GlobalPlanner 和 TebLocalPlannerROS 规划路径和平移避障，`cmd_vel_target_yaw_filter.py`
+保留 TEB 输出的 `linear.x/y`，把 `angular.z` 改为朝当前目标点 `yaw` 收敛。
 因此小车在路上就会转向目标点规定的车头朝向，车头不再强制对准导航路线。
-DWA 的 `forward_point_distance` 设为 0，让 `base_footprint` 原点跟踪路径；
-局部规划通过较低 `path_distance_bias` 和较高 `occdist_scale` 优先保持离墙余量。
+TEB 通过 `global_plan_viapoint_sep` 和 `weight_viapoint` 跟踪全局路径；
+局部规划通过 `min_obstacle_dist`、`inflation_dist` 和 `weight_obstacle` 保持离墙余量。
 最大平移速度在 `config/base_local_planner_params.yaml` 中配置。
-DWA 的 `yaw_goal_tolerance` 故意放宽到接近 pi，避免它在终点进入原地旋转判碰撞；
+TEB 的 `yaw_goal_tolerance` 故意放宽到接近 pi，避免它在终点进入原地旋转判碰撞；
 目标朝向由过滤节点负责。
 只有建图路线保留中间过渡点。
 

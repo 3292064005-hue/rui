@@ -116,6 +116,8 @@ def main():
         root / 'config' / 'amcl_params.yaml',
         root / 'config' / 'move_base_params.yaml',
         root / 'config' / 'costmap_common_params.yaml',
+        root / 'config' / 'global_costmap_common_params.yaml',
+        root / 'config' / 'local_costmap_common_params.yaml',
         root / 'config' / 'global_costmap_params.yaml',
         root / 'config' / 'local_costmap_params.yaml',
         root / 'config' / 'base_local_planner_params.yaml',
@@ -172,7 +174,7 @@ def main():
             'navfn',
             'global_planner',
             'base_local_planner',
-            'dwa_local_planner',
+            'teb_local_planner',
             'costmap_2d',
             'clear_costmap_recovery',
             'rotate_recovery',
@@ -371,75 +373,123 @@ def main():
     navigation_text = (
         root / 'config' / 'navigation_params.yaml').read_text(errors='ignore')
     if 'navigation_use_holonomic_path_follower: false' in navigation_text:
-        print('[OK] formal navigation uses move_base local planner')
+        print('[OK] formal navigation uses TEB holonomic local planner')
     else:
         errors.append(
-            'navigation_params.yaml should use move_base local planner for formal patrol')
+            'navigation_params.yaml should use TEB local planner for formal patrol')
     if 'navigation_use_plan_subgoals: false' in navigation_text:
-        print('[OK] formal navigation sends complete move_base goals')
+        print('[OK] formal navigation lets move_base/TEB track each full goal')
     else:
         errors.append(
-            'navigation_params.yaml should not split formal patrol into subgoals')
+            'navigation_params.yaml should not split formal patrol into short action subgoals')
     if 'navigation_separate_rotation: false' in navigation_text:
-        print('[OK] formal navigation couples translation and rotation')
+        print('[OK] formal navigation controls yaw while translating')
     else:
         errors.append(
-            'navigation_params.yaml should disable separate rotation for formal patrol')
+            'navigation_params.yaml should keep yaw control active during translation')
     if 'navigation_cmd_vel_target_yaw_filter: true' in navigation_text:
         print('[OK] formal navigation steers yaw to waypoint target while driving')
     else:
         errors.append(
             'navigation_params.yaml should enable target-yaw cmd_vel filtering')
+    if 'navigation_path_velocity_filter: true' in navigation_text:
+        print('[OK] formal navigation aligns velocity to global plan')
+    else:
+        errors.append(
+            'navigation_params.yaml should align commanded velocity with the global plan')
+    if 'navigation_global_plan_topic: /move_base/GlobalPlanner/plan' in navigation_text:
+        print('[OK] velocity alignment follows the published global plan')
+    else:
+        errors.append(
+            'navigation_params.yaml should align velocity from /move_base/GlobalPlanner/plan')
+    alignment_match = re.search(
+        r'^\s*navigation_path_alignment_gain:\s*([-+0-9.eE]+)',
+        navigation_text, re.MULTILINE)
+    lateral_match = re.search(
+        r'^\s*navigation_path_max_lateral_speed_ratio:\s*([-+0-9.eE]+)',
+        navigation_text, re.MULTILINE)
+    if alignment_match and float(alignment_match.group(1)) >= 0.85:
+        print('[OK] global-plan velocity alignment is strong')
+    else:
+        errors.append('navigation_path_alignment_gain should keep velocity close to the global path direction')
+    if lateral_match and 0.0 <= float(lateral_match.group(1)) <= 0.15:
+        print('[OK] lateral path correction is bounded')
+    else:
+        errors.append('navigation_path_max_lateral_speed_ratio should limit corner-cutting lateral velocity')
 
     local_planner_text = (
         root / 'config' / 'base_local_planner_params.yaml').read_text(errors='ignore')
     move_base_text = (root / 'config' / 'move_base_params.yaml').read_text(
         errors='ignore')
-    if 'base_local_planner: dwa_local_planner/DWAPlannerROS' in move_base_text:
-        print('[OK] formal local planner: DWAPlannerROS')
+    if 'base_local_planner: teb_local_planner/TebLocalPlannerROS' in move_base_text:
+        print('[OK] formal local planner: TebLocalPlannerROS')
     else:
-        errors.append('move_base_params.yaml should use DWAPlannerROS')
+        errors.append('move_base_params.yaml should use TebLocalPlannerROS')
     if 'base_global_planner: global_planner/GlobalPlanner' in move_base_text:
         print('[OK] formal global planner: GlobalPlanner')
     else:
         errors.append('move_base_params.yaml should use global_planner/GlobalPlanner')
 
-    dwa_block_match = re.search(
-        r'^DWAPlannerROS:\n(?P<body>(?:\s{2}.+\n?)+)',
+    teb_block_match = re.search(
+        r'^TebLocalPlannerROS:\n(?P<body>(?:\s{2}.+\n?)+)',
         local_planner_text, re.MULTILINE)
-    dwa_text = dwa_block_match.group('body') if dwa_block_match else ''
+    teb_text = teb_block_match.group('body') if teb_block_match else ''
     theta_match = re.search(
         r'^\s*max_vel_theta:\s*([-+0-9.eE]+)',
-        dwa_text, re.MULTILINE)
-    samples_match = re.search(
-        r'^\s*vth_samples:\s*(\d+)', dwa_text, re.MULTILINE)
+        teb_text, re.MULTILINE)
+    y_match = re.search(
+        r'^\s*max_vel_y:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
     yaw_match = re.search(
         r'^\s*yaw_goal_tolerance:\s*([-+0-9.eE]+)',
-        dwa_text, re.MULTILINE)
-    occdist_match = re.search(
-        r'^\s*occdist_scale:\s*([-+0-9.eE]+)',
-        dwa_text, re.MULTILINE)
+        teb_text, re.MULTILINE)
+    via_match = re.search(
+        r'^\s*global_plan_viapoint_sep:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
+    via_weight_match = re.search(
+        r'^\s*weight_viapoint:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
+    obstacle_match = re.search(
+        r'^\s*min_obstacle_dist:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
+    inflation_match = re.search(
+        r'^\s*inflation_dist:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
+    nh_match = re.search(
+        r'^\s*weight_kinematics_nh:\s*([-+0-9.eE]+)',
+        teb_text, re.MULTILINE)
     if theta_match and float(theta_match.group(1)) > 0.0:
-        print('[OK] DWA angular velocity enabled')
+        print('[OK] TEB angular velocity enabled')
     else:
-        errors.append('DWAPlannerROS leaves max_vel_theta disabled')
-    if samples_match and int(samples_match.group(1)) > 1:
-        print('[OK] DWA samples angular velocities')
+        errors.append('TebLocalPlannerROS leaves max_vel_theta disabled')
+    if y_match and float(y_match.group(1)) > 0.0:
+        print('[OK] TEB holonomic strafing enabled')
     else:
-        errors.append('DWAPlannerROS does not sample angular velocity')
+        errors.append('TebLocalPlannerROS should keep max_vel_y > 0 for the holonomic base')
     if yaw_match and float(yaw_match.group(1)) >= 3.0:
-        print('[OK] DWA goal yaw is decoupled from path following')
+        print('[OK] TEB goal yaw is decoupled from path following')
     else:
-        errors.append('DWAPlannerROS should not enforce final yaw; target-yaw filter handles heading')
-    if re.search(r'^\s*forward_point_distance:\s*0(?:\.0+)?\s*$',
-                 dwa_text, re.MULTILINE):
-        print('[OK] DWA tracks the path at the robot origin')
+        errors.append('TebLocalPlannerROS should not enforce final yaw during formal patrol')
+    if via_match and 0.0 < float(via_match.group(1)) <= 0.12:
+        print('[OK] TEB samples dense global-plan via-points')
     else:
-        errors.append('DWAPlannerROS forward_point_distance should be 0.0 for origin path tracking')
-    if occdist_match and float(occdist_match.group(1)) >= 0.5:
-        print('[OK] DWA keeps obstacle clearance weight high')
+        errors.append('TebLocalPlannerROS should sample dense via-points from the global plan')
+    if via_weight_match and float(via_weight_match.group(1)) >= 35.0:
+        print('[OK] TEB strongly follows the global plan')
     else:
-        errors.append('DWAPlannerROS occdist_scale should stay high enough to avoid wall-hugging')
+        errors.append('TebLocalPlannerROS should heavily weight global-plan via-points')
+    if obstacle_match and 0.05 <= float(obstacle_match.group(1)) <= 0.12:
+        print('[OK] TEB keeps feasible short-horizon obstacle clearance')
+    else:
+        errors.append('TebLocalPlannerROS min_obstacle_dist should stay feasible for narrow mapped corridors')
+    if inflation_match and float(inflation_match.group(1)) >= 0.25:
+        print('[OK] TEB keeps soft obstacle inflation cost')
+    else:
+        errors.append('TebLocalPlannerROS inflation_dist should keep a soft wall clearance cost')
+    if nh_match and 0.0 <= float(nh_match.group(1)) <= 2.0:
+        print('[OK] TEB allows holonomic motion')
+    else:
+        errors.append('TebLocalPlannerROS weight_kinematics_nh should stay low for the holonomic base')
 
     slam_goals = navigation_goal_names(root / 'config' / 'slam_navigation_params.yaml')
     if len(slam_goals) == 12 and 'zone_1' in slam_goals and 'zone_2' in slam_goals:

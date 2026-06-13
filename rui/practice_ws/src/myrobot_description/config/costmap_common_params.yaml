@@ -7,7 +7,7 @@ obstacle_range: 2.8
 raytrace_range: 3.2
 transform_tolerance: 0.5
 
-inflation_radius: 0.20
+inflation_radius: 0.23
 cost_scaling_factor: 2.0
 
 observation_sources: laser_scan_sensor

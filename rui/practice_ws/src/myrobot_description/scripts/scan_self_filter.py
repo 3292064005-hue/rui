@@ -48,7 +48,7 @@ class ScanSelfFilter(object):
         ranges = []
         threshold = max(msg.range_min, self.min_valid_range)
         for value in msg.ranges:
-            if math.isfinite(value) and value < threshold:
+            if math.isfinite(value) and value <= threshold:
                 ranges.append(float('inf'))
             else:
                 ranges.append(value)

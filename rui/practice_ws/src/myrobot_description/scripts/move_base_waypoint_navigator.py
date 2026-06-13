@@ -228,7 +228,8 @@ class MoveBaseWaypointNavigator(object):
         goal.target_pose.pose.position.x = item['x']
         goal.target_pose.pose.position.y = item['y']
         goal.target_pose.pose.position.z = 0.0
-        qx, qy, qz, qw = quaternion_from_yaw(item['yaw'] if yaw is None else yaw)
+        target_yaw = item.get('move_base_yaw', item['yaw']) if yaw is None else yaw
+        qx, qy, qz, qw = quaternion_from_yaw(target_yaw)
         goal.target_pose.pose.orientation.x = qx
         goal.target_pose.pose.orientation.y = qy
         goal.target_pose.pose.orientation.z = qz
@@ -369,21 +370,41 @@ class MoveBaseWaypointNavigator(object):
 
         spacing = max(0.20, self.plan_subgoal_spacing)
         subgoals = []
-        last_x = plan[0].pose.position.x
-        last_y = plan[0].pose.position.y
-        distance_since_subgoal = 0.0
+        points = [(p.pose.position.x, p.pose.position.y) for p in plan]
+        cumulative = [0.0]
+        for i in range(1, len(points)):
+            cumulative.append(
+                cumulative[-1] + math.hypot(
+                    points[i][0] - points[i - 1][0],
+                    points[i][1] - points[i - 1][1]))
+        if cumulative[-1] <= spacing:
+            return [item]
+
         subgoal_index = 1
-        for pose_stamped in plan[1:-1]:
-            x = pose_stamped.pose.position.x
-            y = pose_stamped.pose.position.y
-            distance_since_subgoal += math.hypot(x - last_x, y - last_y)
-            last_x, last_y = x, y
-            if distance_since_subgoal >= spacing:
-                subgoals.append(self._pose_to_item(
-                    pose_stamped, '%s_via_%02d' % (item['name'], subgoal_index),
-                    pose[2]))
-                subgoal_index += 1
-                distance_since_subgoal = 0.0
+        target_s = spacing
+        segment_index = 1
+        while target_s < cumulative[-1] - spacing * 0.5:
+            while segment_index < len(cumulative) - 1 and cumulative[segment_index] < target_s:
+                segment_index += 1
+            seg_start_s = cumulative[segment_index - 1]
+            seg_end_s = cumulative[segment_index]
+            seg_len = max(1e-9, seg_end_s - seg_start_s)
+            alpha = clamp((target_s - seg_start_s) / seg_len, 0.0, 1.0)
+            ax, ay = points[segment_index - 1]
+            bx, by = points[segment_index]
+            subgoal_yaw = math.atan2(by - ay, bx - ax)
+            via = self._make_pose_stamped(
+                ax + (bx - ax) * alpha,
+                ay + (by - ay) * alpha,
+                subgoal_yaw)
+            subgoals.append(self._pose_to_item(
+                via, '%s_via_%02d' % (item['name'], subgoal_index), subgoal_yaw))
+            subgoals[-1]['yaw'] = float(item['yaw'])
+            subgoals[-1]['move_base_yaw'] = subgoal_yaw
+            subgoals[-1]['xy_tolerance'] = self.plan_subgoal_tolerance
+            subgoals[-1]['strict_xy_tolerance'] = True
+            subgoal_index += 1
+            target_s += spacing
 
         subgoals.append(item)
         rospy.loginfo(
@@ -392,38 +413,86 @@ class MoveBaseWaypointNavigator(object):
         return subgoals
 
     def _send_move_base_goal(self, item, timeout):
-        pose = self._current_pose()
-        move_base_yaw = pose[2] if pose is not None else 0.0
-        goal = self._make_goal(item, yaw=move_base_yaw)
+        goal = self._make_goal(item)
         self.client.send_goal(goal)
-        finished = self.client.wait_for_result(rospy.Duration(timeout))
-        if not finished:
-            self.client.cancel_goal()
-            self._stop_robot()
-            return False, None, 'move_base did not finish before timeout'
-        state = self.client.get_state()
-        result_text = self.client.get_goal_status_text()
-        return state == GoalStatus.SUCCEEDED, state, result_text
+        deadline = rospy.Time.now() + rospy.Duration(timeout)
+        while not rospy.is_shutdown() and rospy.Time.now() < deadline:
+            if self.client.wait_for_result(rospy.Duration(0.2)):
+                state = self.client.get_state()
+                result_text = self.client.get_goal_status_text()
+                return state == GoalStatus.SUCCEEDED, state, result_text
+            if self._already_at_goal_xy(item):
+                self.client.cancel_goal()
+                self._stop_robot()
+                return (
+                    True,
+                    GoalStatus.SUCCEEDED,
+                    'accepted goal after reaching xy proximity before move_base terminal state')
+        self.client.cancel_goal()
+        self._stop_robot()
+        if self._already_at_goal_xy(item):
+            return (
+                True,
+                GoalStatus.SUCCEEDED,
+                'accepted goal after reaching xy proximity at timeout')
+        return False, None, 'move_base did not finish before timeout'
 
     def _already_at_goal_xy(self, item):
         pose = self._current_pose()
         if pose is None:
             return False
-        return math.hypot(item['x'] - pose[0], item['y'] - pose[1]) <= max(
-            self.translation_tolerance, self.skip_reached_goal_distance)
+        tolerance = max(
+            self.translation_tolerance,
+            float(item.get('xy_tolerance', 0.0)))
+        if not item.get('strict_xy_tolerance', False):
+            tolerance = max(tolerance, self.skip_reached_goal_distance)
+        return math.hypot(item['x'] - pose[0], item['y'] - pose[1]) <= tolerance
 
     def _path_target(self, plan, pose):
         if not plan:
             return None
         px, py = pose[0], pose[1]
-        closest = min(
-            range(len(plan)),
-            key=lambda i: math.hypot(
-                plan[i].pose.position.x - px, plan[i].pose.position.y - py))
-        for candidate in plan[closest + 1:]:
-            if math.hypot(candidate.pose.position.x - px,
-                          candidate.pose.position.y - py) >= self.path_lookahead:
-                return candidate.pose.position.x, candidate.pose.position.y
+        if len(plan) < 2:
+            end = plan[-1].pose.position
+            return end.x, end.y
+
+        points = [(p.pose.position.x, p.pose.position.y) for p in plan]
+        cumulative = [0.0]
+        for i in range(1, len(points)):
+            cumulative.append(
+                cumulative[-1] + math.hypot(
+                    points[i][0] - points[i - 1][0],
+                    points[i][1] - points[i - 1][1]))
+
+        best_distance = float('inf')
+        best_path_s = 0.0
+        for i in range(len(points) - 1):
+            ax, ay = points[i]
+            bx, by = points[i + 1]
+            sx = bx - ax
+            sy = by - ay
+            seg_len_sq = sx * sx + sy * sy
+            if seg_len_sq <= 1e-9:
+                continue
+            t = clamp(((px - ax) * sx + (py - ay) * sy) / seg_len_sq, 0.0, 1.0)
+            proj_x = ax + t * sx
+            proj_y = ay + t * sy
+            distance = math.hypot(px - proj_x, py - proj_y)
+            if distance < best_distance:
+                best_distance = distance
+                best_path_s = cumulative[i] + math.sqrt(seg_len_sq) * t
+
+        target_s = min(cumulative[-1], best_path_s + max(0.05, self.path_lookahead))
+        for i in range(len(points) - 1):
+            if cumulative[i + 1] < target_s:
+                continue
+            seg_len = cumulative[i + 1] - cumulative[i]
+            if seg_len <= 1e-9:
+                continue
+            t = (target_s - cumulative[i]) / seg_len
+            ax, ay = points[i]
+            bx, by = points[i + 1]
+            return ax + (bx - ax) * t, ay + (by - ay) * t
         end = plan[-1].pose.position
         return end.x, end.y
 
@@ -455,11 +524,13 @@ class MoveBaseWaypointNavigator(object):
         vx_body = cos_yaw * vx_world + sin_yaw * vy_world
         vy_body = -sin_yaw * vx_world + cos_yaw * vy_world
 
+        max_planar_speed = min(
+            self.translation_max_forward_speed,
+            self.translation_max_lateral_speed)
+        planar_speed = math.hypot(vx_body, vy_body)
         scale = 1.0
-        if abs(vx_body) > self.translation_max_forward_speed:
-            scale = min(scale, self.translation_max_forward_speed / abs(vx_body))
-        if abs(vy_body) > self.translation_max_lateral_speed:
-            scale = min(scale, self.translation_max_lateral_speed / abs(vy_body))
+        if planar_speed > max_planar_speed > 0.0:
+            scale = max_planar_speed / planar_speed
 
         cmd = Twist()
         cmd.linear.x = vx_body * scale
@@ -484,10 +555,13 @@ class MoveBaseWaypointNavigator(object):
                 continue
 
             goal_distance = math.hypot(item['x'] - pose[0], item['y'] - pose[1])
-            if goal_distance <= self.translation_tolerance:
+            if goal_distance <= max(
+                    self.translation_tolerance,
+                    self.skip_reached_goal_distance):
                 cmd = Twist()
                 cmd.angular.z, yaw_error = self._target_yaw_speed(pose, item)
-                if yaw_error > self.rotation_tolerance:
+                if (goal_distance <= self.translation_tolerance and
+                        yaw_error > self.rotation_tolerance):
                     self.cmd_pub.publish(cmd)
                     arrival_cycles = 0
                     rate.sleep()

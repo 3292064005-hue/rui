@@ -44,7 +44,7 @@
           output="screen">
         <param name="input_scan_topic" value="$(arg raw_scan_topic)" />
         <param name="output_scan_topic" value="$(arg scan_topic)" />
-        <param name="min_valid_range" value="0.18" />
+        <param name="min_valid_range" value="0.36" />
     </node>
 
     <node pkg="map_server"
@@ -83,8 +83,8 @@
         <remap from="cmd_vel" to="/cmd_vel_raw" />
         <rosparam command="load" file="$(find myrobot_description)/config/move_base_params.yaml" />
         <rosparam command="load" file="$(find myrobot_description)/config/base_local_planner_params.yaml" />
-        <rosparam command="load" file="$(find myrobot_description)/config/costmap_common_params.yaml" ns="global_costmap" />
-        <rosparam command="load" file="$(find myrobot_description)/config/costmap_common_params.yaml" ns="local_costmap" />
+        <rosparam command="load" file="$(find myrobot_description)/config/global_costmap_common_params.yaml" ns="global_costmap" />
+        <rosparam command="load" file="$(find myrobot_description)/config/local_costmap_common_params.yaml" ns="local_costmap" />
         <rosparam command="load" file="$(find myrobot_description)/config/global_costmap_params.yaml" />
         <rosparam command="load" file="$(find myrobot_description)/config/local_costmap_params.yaml" />
     </node>

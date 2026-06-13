@@ -135,7 +135,7 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0.08
-      Topic: /move_base/DWAPlannerROS/local_plan
+      Topic: /move_base/TebLocalPlannerROS/local_plan
       Unreliable: false
       Value: true
     - Class: rviz/PoseArray

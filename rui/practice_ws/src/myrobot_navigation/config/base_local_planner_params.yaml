@@ -1,0 +1,115 @@
+TebLocalPlannerROS:
+  odom_topic: odom
+  map_frame: map
+
+  teb_autosize: true
+  dt_ref: 0.22
+  dt_hysteresis: 0.05
+  min_samples: 12
+  max_samples: 120
+  global_plan_overwrite_orientation: true
+  allow_init_with_backwards_motion: false
+  max_global_plan_lookahead_dist: 1.20
+  global_plan_viapoint_sep: 0.15
+  via_points_ordered: true
+  global_plan_prune_distance: 0.28
+  exact_arc_length: false
+  force_reinit_new_goal_dist: 1.2
+  force_reinit_new_goal_angular: 1.2
+  feasibility_check_no_poses: 3
+  publish_feedback: false
+  min_resolution_collision_check_angular: 0.05
+  control_look_ahead_poses: 2
+
+  # Holonomic base: keep x/y speed limits symmetric and let TEB own the full
+  # command, including angular.z.
+  max_vel_x: 0.30
+  max_vel_x_backwards: 0.30
+  max_vel_y: 0.30
+  max_vel_theta: 0.65
+  acc_lim_x: 0.75
+  acc_lim_y: 0.75
+  acc_lim_theta: 1.2
+  min_turning_radius: 0.0
+  wheelbase: 0.0
+  cmd_angle_instead_rotvel: false
+  is_footprint_dynamic: false
+
+  footprint_model:
+    type: "polygon"
+    vertices: [[0.10, 0.09], [0.10, -0.09], [-0.10, -0.09], [-0.10, 0.09]]
+
+  xy_goal_tolerance: 0.08
+  # Keep TEB focused on xy so final waypoint yaw cannot block the patrol lap.
+  yaw_goal_tolerance: 3.14
+  free_goal_vel: false
+  complete_global_plan: true
+
+  min_obstacle_dist: 0.06
+  inflation_dist: 0.18
+  dynamic_obstacle_inflation_dist: 0.18
+  # Keep the global static map in charge of corridor geometry. In this Gazebo
+  # setup, converting every local laser costmap cell into TEB point obstacles
+  # makes the first segment to zone_1 infeasible even when the global plan is valid.
+  include_costmap_obstacles: false
+  include_dynamic_obstacles: false
+  costmap_obstacles_behind_robot_dist: 0.10
+  obstacle_poses_affected: 16
+  legacy_obstacle_association: false
+  obstacle_association_force_inclusion_factor: 2.0
+  obstacle_association_cutoff_factor: 8.0
+  costmap_converter_plugin: ""
+  costmap_converter_spin_thread: true
+  costmap_converter_rate: 5.0
+  
+  no_inner_iterations: 5
+  no_outer_iterations: 4
+  optimization_activate: true
+  optimization_verbose: false
+  penalty_epsilon: 0.05
+  obstacle_cost_exponent: 3.0
+  weight_max_vel_x: 2.0
+  weight_max_vel_y: 2.0
+  weight_max_vel_theta: 1.0
+  weight_acc_lim_x: 2.0
+  weight_acc_lim_y: 2.0
+  weight_acc_lim_theta: 1.0
+  weight_kinematics_nh: 0.1
+  weight_kinematics_forward_drive: 0.0
+  weight_kinematics_turning_radius: 0.0
+  weight_optimaltime: 0.01
+  weight_shortest_path: 0.9
+  weight_obstacle: 80.0
+  weight_inflation: 10.0
+  weight_dynamic_obstacle: 10.0
+  weight_dynamic_obstacle_inflation: 0.2
+  weight_viapoint: 50.0
+  weight_prefer_rotdir: 0.0
+  weight_adapt_factor: 2.0
+
+  enable_homotopy_class_planning: false
+  enable_multithreading: false
+  simple_exploration: false
+  max_number_classes: 2
+  selection_cost_hysteresis: 1.0
+  selection_prefer_initial_plan: 0.9
+  selection_obst_cost_scale: 100.0
+  selection_viapoint_cost_scale: 1.0
+  selection_alternative_time_cost: false
+  switching_blocking_period: 0.0
+  roadmap_graph_no_samples: 10
+  roadmap_graph_area_width: 3.0
+  roadmap_graph_area_length_scale: 1.0
+  h_signature_prescaler: 0.5
+  h_signature_threshold: 0.1
+  obstacle_heading_threshold: 0.45
+  viapoints_all_candidates: true
+  visualize_hc_graph: false
+
+  shrink_horizon_backup: true
+  shrink_horizon_min_duration: 8.0
+  oscillation_recovery: false
+  oscillation_v_eps: 0.10
+  oscillation_omega_eps: 0.10
+  oscillation_recovery_min_duration: 8.0
+  oscillation_filter_duration: 8.0

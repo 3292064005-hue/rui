@@ -1,0 +1,28 @@
+<launch>
+    <!--
+      Default task patrol entrypoint.
+      This launch now uses the ROS navigation stack instead of the simple /cmd_vel patrol controller.
+      The legacy simple controller version is kept in task_patrol_simple.launch.
+    -->
+    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_01.yaml" />
+    <arg name="params" default="$(find myrobot_task)/config/task_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_navigation)/config/navigation_params.yaml" />
+    <arg name="launch_rviz" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="paused" default="false" />
+    <arg name="start_goals" default="true" />
+    <arg name="start_recognition" default="true" />
+    <arg name="enable_evidence_recorder" default="true" />
+
+    <include file="$(find myrobot_navigation)/launch/autonomous_navigation.launch">
+        <arg name="map_file" value="$(arg map_file)" />
+        <arg name="params" value="$(arg params)" />
+        <arg name="nav_params" value="$(arg nav_params)" />
+        <arg name="launch_rviz" value="$(arg launch_rviz)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="start_goals" value="$(arg start_goals)" />
+        <arg name="start_recognition" value="$(arg start_recognition)" />
+        <arg name="record_evidence" value="$(arg enable_evidence_recorder)" />
+    </include>
+</launch>

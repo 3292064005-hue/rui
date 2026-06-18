@@ -1,0 +1,20 @@
+# Full Gazebo simulation driver parameters.
+# These values match the wheel/link geometry in urdf/turtlebot3_mecanum.urdf.xacro.
+wheel_radius: 0.033
+half_wheel_base: 0.0638
+half_track_width: 0.0850
+cmd_vel_topic: /cmd_vel
+joint_states_topic: /joint_states
+wheel_speed_topic: /mecanum_wheel_speeds
+odom_topic: /odom
+base_frame: base_footprint
+odom_frame: odom
+joint_state_rate: 30.0
+cmd_vel_timeout: 0.5
+max_wheel_angular_speed: 110.0
+publish_joint_states: true
+publish_wheel_speeds: true
+publish_odometry: false
+publish_tf: false
+control_gazebo_model: false
+gazebo_model_name: mycar

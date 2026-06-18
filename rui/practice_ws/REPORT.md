@@ -118,7 +118,7 @@ roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
 | 原点 | 约 (-0.488, -3.815) |
 | 建图单圈目标 | 12 |
 | 正式巡航目标 | 4 |
-| 默认建图巡航 | 3 圈 |
+| 默认建图巡航 | 2 圈 |
 | 回环优化 | 开启 |
 | 导航地图 | `raicom_slam_map_final.yaml` |
 

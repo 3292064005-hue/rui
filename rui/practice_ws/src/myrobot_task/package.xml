@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>myrobot_task</name>
+  <version>0.1.0</version>
+  <description>Task patrol entrypoints, patrol logging, and mission summary utilities.</description>
+  <maintainer email="w@todo.todo">w</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>myrobot_description</depend>
+  <depend>myrobot_navigation</depend>
+  <depend>myrobot_simulation</depend>
+  <depend>myrobot_recognition</depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf</depend>
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <export/>
+</package>

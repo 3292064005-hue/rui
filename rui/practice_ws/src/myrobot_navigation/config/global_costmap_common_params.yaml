@@ -1,0 +1,13 @@
+# Global planning should stay on the static map. Feeding live laser obstacle
+# points into the global map can temporarily seal narrow corridors and make
+# GlobalPlanner report NO PATH even when the static map has a valid route.
+footprint: [[0.10, 0.09], [0.10, -0.09], [-0.10, -0.09], [-0.10, 0.09]]
+footprint_padding: 0.00
+
+transform_tolerance: 0.5
+inflation_radius: 0.15
+cost_scaling_factor: 5.0
+
+plugins:
+  - {name: static_layer, type: "costmap_2d::StaticLayer"}
+  - {name: inflation_layer, type: "costmap_2d::InflationLayer"}

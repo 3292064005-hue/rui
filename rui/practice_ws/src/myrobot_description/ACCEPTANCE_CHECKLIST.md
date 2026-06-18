@@ -7,8 +7,8 @@ cd /root/workspace/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
-python3 -m py_compile src/myrobot_description/scripts/*.py
-rosrun myrobot_description static_workspace_check.py
+python3 -m py_compile src/myrobot_task/scripts/*.py
+rosrun myrobot_task static_workspace_check.py
 ```
 
 预期：构建成功，静态检查输出 `Static check passed.`。
@@ -16,28 +16,28 @@ rosrun myrobot_description static_workspace_check.py
 ## SLAM
 
 ```bash
-roslaunch myrobot_description slam_mapping.launch
+roslaunch myrobot_navigation slam_mapping.launch
 ```
 
 验收：
 
 - `/map/info` 分辨率约 `0.02m`，地图结构完整；
 - 自动建图巡航读取 `slam_navigation_params.yaml`；
-- 默认完整巡航 3 圈；
-- 默认建图节点为 `/slam_toolbox`；
+- 默认完整巡航 1 圈；
+- 默认建图节点为 `/odom_laser_mapper`；
 - 地图无旋转、重影和场外长射线。
 
 最终地图：
 
 ```text
-maps/raicom_slam_map_final.pgm
-maps/raicom_slam_map_final.yaml
+myrobot_navigation/maps/raicom_slam_map_final.pgm
+myrobot_navigation/maps/raicom_slam_map_final.yaml
 ```
 
 ## 导航
 
 ```bash
-roslaunch myrobot_description autonomous_navigation.launch
+roslaunch myrobot_navigation autonomous_navigation.launch
 ```
 
 验收：
@@ -50,7 +50,7 @@ roslaunch myrobot_description autonomous_navigation.launch
 ## 图像识别
 
 ```bash
-roslaunch myrobot_description task_patrol.launch
+roslaunch myrobot_task task_patrol.launch
 ```
 
 验收：
@@ -68,8 +68,8 @@ roslaunch myrobot_description task_patrol.launch
 权重路径：
 
 ```text
-recognition_weights/best.pt
-recognition_weights/best.onnx
+myrobot_recognition/recognition_weights/best.pt
+myrobot_recognition/recognition_weights/best.onnx
 ```
 
 参数：

@@ -1,215 +1,48 @@
-# myrobot_description 项目说明
+# myrobot 项目总览
 
-`myrobot_description` 是本工作空间的核心功能包，包含机器人模型、Gazebo 仿真、传感器插件、SLAM 建图、自主导航、任务巡检和识别结果输出。
+这是一个按功能拆分的 ROS1 + Gazebo 工作区。
 
-本包适用于 ROS1 + Gazebo 仿真环境。当前版本重点完成仿真演示，不包含真实硬件的 STM32、CAN、串口或电机驱动。
+## 包分工
 
----
+- `myrobot_description`：URDF、mesh、world、材质资源
+- `myrobot_simulation`：Gazebo 仿真和底盘驱动
+- `myrobot_navigation`：SLAM、地图、导航、目标点发送
+- `myrobot_recognition`：图像识别、模板、权重、运行时
+- `myrobot_task`：任务入口、日志、汇总、静态检查
 
-## 1. 当前已实现功能
-
-| 模块 | 状态 | 说明 |
-|---|---:|---|
-| 机器人模型 | 已完成 | 麦克纳姆轮底盘、雷达、相机、IMU 坐标系 |
-| Gazebo 世界加载 | 已完成 | 场地含两块无碰撞视觉识别面板 |
-| 底盘仿真驱动 | 已完成 | `/cmd_vel` 控制 Gazebo 中的平面运动 |
-| 轮子仿真 | 已完成 | 根据 `/cmd_vel` 逆解四轮速度并发布 `/joint_states` |
-| 激光雷达 | 已完成 | 发布 `/scan` |
-| 相机 | 已完成 | 发布 `/camera/image_raw` 和 `/camera/camera_info` |
-| IMU | 已完成 | 发布 `/imu/data` |
-| SLAM 建图 | 已完成 | 默认 `slam_toolbox` 图优化建图，可选 `odom_laser`、`gmapping` 对比 |
-| 地图保存 | 已完成 | 保存 `.pgm` 和 `.yaml` |
-| 自主导航 | 已完成 | `map_server + AMCL + move_base` |
-| 自动巡点 | 已完成 | 默认使用 `move_base` 顺序执行导航目标点 |
-| 识别结果输出 | 已完成 | YOLO ONNX 整帧检测，模板识别作为兼容后端 |
-| 证据记录 | 已完成 | 保存轨迹、识别结果、任务状态和总结 |
-
----
-
-## 2. 文件结构
-
-```text
-myrobot_description/
-├── CMakeLists.txt
-├── package.xml
-├── README.md
-├── README_SIMULATION.md
-├── README_SLAM.md
-├── README_NAVIGATION.md
-├── README_TASK.md
-├── launch/
-│   ├── 1.launch                       # RViz 查看模型
-│   ├── mycar_gazebo.launch            # Gazebo 基础仿真
-│   ├── full_simulation.launch         # 完整仿真接口
-│   ├── test_sim_drivers.launch        # 仿真驱动测试
-│   ├── task_patrol.launch             # 默认巡检任务（navigate / move_base）
-│   ├── task_patrol_simple.launch      # 旧版简单 /cmd_vel 巡检任务
-│   ├── slam_mapping.launch            # SLAM 建图
-│   ├── save_slam_map.launch           # 保存 SLAM 地图
-│   ├── navigation.launch              # 导航栈
-│   ├── autonomous_navigation.launch   # 一键自主导航任务
-│   └── send_navigation_goals.launch   # 单独发送导航目标
-├── config/
-│   ├── simulation_params.yaml         # 仿真轮子驱动参数
-│   ├── task_params.yaml               # 巡点和识别区参数
-│   ├── slam_toolbox_params.yaml       # 默认 slam_toolbox 参数
-│   ├── slam_gmapping_params.yaml      # gmapping 对比参数
-│   ├── navigation_params.yaml         # 正式自主导航 4 点路线
-│   ├── slam_navigation_params.yaml    # SLAM 建图 12 点路线
-│   ├── amcl_params.yaml               # AMCL 参数
-│   ├── move_base_params.yaml          # move_base 参数
-│   ├── costmap_common_params.yaml     # 代价地图通用参数
-│   ├── global_costmap_params.yaml     # 全局代价地图参数
-│   ├── local_costmap_params.yaml      # 局部代价地图参数
-│   └── *.rviz                         # RViz 显示配置
-├── maps/
-│   ├── raicom_slam_map_final.pgm      # 默认导航地图
-│   ├── raicom_slam_map_final.yaml
-│   ├── raicom_slam_map_final.png      # 报告预览图
-│   ├── raicom_known_map.pgm           # 世界几何参考地图
-│   └── raicom_known_map.yaml
-├── scripts/
-│   ├── mecanum_sim_driver.py          # 麦克纳姆轮状态仿真
-│   ├── simulation_status_monitor.py   # 仿真话题健康监控
-│   ├── patrol_navigator.py            # /cmd_vel 巡点控制
-│   ├── battlefield_recognition.py     # 识别区结果输出
-│   ├── odom_laser_mapper.py           # 仿真专用固定边界建图对比后端
-│   ├── task_evidence_recorder.py      # 任务证据记录
-│   ├── slam_status_monitor.py         # SLAM 状态监控
-│   ├── save_slam_map.py               # 保存 /map
-│   ├── navigation_initializer.py      # 发布 AMCL 初始位姿
-│   ├── move_base_waypoint_navigator.py# move_base 目标点发送
-│   ├── navigation_status_monitor.py   # 导航健康监控
-│   └── latest_mission_summary.py      # 查看最新任务总结
-├── urdf/
-├── meshes/
-├── recognition_templates/
-├── recognition_weights/               # 正式 YOLO PT/ONNX 权重
-├── python_vendor/                     # Python 3.8 CPU ONNX Runtime
-└── worlds/
-```
-
----
-
-## 3. 一键运行命令
-
-### 3.1 只查看机器人模型
+## 推荐入口
 
 ```bash
-roslaunch myrobot_description 1.launch
+roslaunch myrobot_task task_patrol.launch
 ```
 
-### 3.2 启动完整仿真
+它会串起仿真、导航、识别和任务记录，是最优默认入口。
+
+## 常用命令
 
 ```bash
-roslaunch myrobot_description full_simulation.launch
+roslaunch myrobot_simulation full_simulation.launch
+roslaunch myrobot_navigation navigation.launch
+roslaunch myrobot_navigation slam_mapping.launch
+roslaunch myrobot_navigation save_slam_map.launch
+roslaunch myrobot_task task_patrol_simple.launch
+rosrun myrobot_task latest_mission_summary.py
+rosrun myrobot_task static_workspace_check.py
 ```
 
-### 3.3 自动测试仿真驱动
+## 资源路径
 
-```bash
-roslaunch myrobot_description test_sim_drivers.launch
-```
+- 机器人模型：`myrobot_description/urdf/`
+- 仿真参数：`myrobot_simulation/config/`
+- 导航参数和地图：`myrobot_navigation/config/`、`myrobot_navigation/maps/`
+- 识别权重和模板：`myrobot_recognition/recognition_weights/`、`myrobot_recognition/recognition_templates/`
+- 任务参数：`myrobot_task/config/task_params.yaml`
 
-### 3.4 运行巡检识别任务（默认 navigate 巡航）
+## 说明文档
 
-```bash
-roslaunch myrobot_description task_patrol.launch
-```
-
-如果你需要旧版简单 `/cmd_vel` 巡点：
-
-```bash
-roslaunch myrobot_description task_patrol_simple.launch
-```
-
-### 3.5 运行 SLAM 建图
-
-```bash
-roslaunch myrobot_description slam_mapping.launch
-```
-
-### 3.6 保存 SLAM 地图
-
-```bash
-roslaunch myrobot_description save_slam_map.launch
-```
-
-### 3.7 启动自主导航
-
-```bash
-roslaunch myrobot_description autonomous_navigation.launch
-```
-
----
-
-## 4. 启动文件说明
-
-| 文件 | 用途 | 常用参数 |
-|---|---|---|
-| `1.launch` | RViz 查看模型 | `gui:=true/false` |
-| `mycar_gazebo.launch` | Gazebo 基础仿真 | `launch_rviz:=true/false`、`enable_lidar:=true/false` |
-| `full_simulation.launch` | 完整仿真接口 | `start_test_motion:=true/false` |
-| `test_sim_drivers.launch` | 自动发布测试速度 | 无 |
-| `task_patrol.launch` | 默认巡点识别任务（导航栈） | `map_file:=...`、`launch_rviz:=true/false` |
-| `task_patrol_simple.launch` | 旧版简单巡点识别任务 | `launch_rviz:=true/false` |
-| `slam_mapping.launch` | SLAM 建图 | `autonomous_mapping:=true/false` |
-| `save_slam_map.launch` | 保存地图 | `output_dir:=...`、`map_name:=...` |
-| `navigation.launch` | 导航栈 | `map_file:=...`、`initial_pose_x/y/a:=...` |
-| `autonomous_navigation.launch` | 一键自主导航任务 | `map_file:=...`、`start_goals:=true/false` |
-| `send_navigation_goals.launch` | 单独发送导航点 | `nav_params:=...` |
-
----
-
-## 5. 运行结果与日志
-
-任务日志默认写入：
-
-```text
-~/.ros/myrobot_description_logs/mission_YYYYMMDD_HHMMSS/
-```
-
-典型文件：
-
-```text
-trajectory.csv              # 机器人轨迹
-recognition_results.jsonl   # 识别区结果
-patrol_status.jsonl         # 状态事件日志；默认记录 /navigation_status
-mission_summary.md          # 任务总结
-```
-
-查看最新任务总结：
-
-```bash
-rosrun myrobot_description latest_mission_summary.py
-```
-
----
-
-## 6. 快速自检
-
-```bash
-rosrun myrobot_description static_workspace_check.py
-```
-
-该脚本会检查 XML、launch、mesh 路径、Python 脚本权限、地图哈希等静态问题。
-
----
-
-## 7. 注意事项
-
-1. `worlds/rm_map.world` 含不透明视觉识别面板，面板没有碰撞几何。
-2. 默认 `task_patrol.launch` 走导航栈，目标点优先改 `config/navigation_params.yaml`。
-3. 只有在使用 `task_patrol_simple.launch` 时，才优先改 `config/task_params.yaml` 的 `waypoints`。
-4. 正式识别配置为 `yolo_onnx`，权重为 `recognition_weights/best.onnx`。
-5. 当前底盘驱动是 Gazebo 仿真驱动，不是实体车硬件驱动。
-
-## 8. 文档分工
-
-- `README_SIMULATION.md`：Gazebo、底盘与传感器；
-- `README_SLAM.md`：三圈自动建图与地图保存；
-- `README_NAVIGATION.md`：AMCL、move_base 和正式巡航路径；
-- `README_TASK.md`：YOLO 识别、结果话题与证据日志；
-- `ACCEPTANCE_CHECKLIST.md`：比赛前逐项检查。
-
-配置值发生变化时优先更新 YAML；文档不要复制完整参数表。
+- [仿真说明](README_SIMULATION.md)
+- [SLAM 说明](README_SLAM.md)
+- [导航说明](README_NAVIGATION.md)
+- [任务说明](README_TASK.md)
+- [比赛符合性说明](README_COMPETITION_ALIGNMENT.md)
+- [验收清单](ACCEPTANCE_CHECKLIST.md)

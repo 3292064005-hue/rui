@@ -1,0 +1,7 @@
+<launch>
+    <!-- Smoke test: start full simulation and publish a short cmd_vel pattern. -->
+    <include file="$(find myrobot_simulation)/launch/full_simulation.launch">
+        <arg name="launch_rviz" value="true" />
+        <arg name="start_test_motion" value="true" />
+    </include>
+</launch>

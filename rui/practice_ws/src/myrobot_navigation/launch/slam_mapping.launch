@@ -1,0 +1,189 @@
+<launch>
+    <!--
+      SLAM mapping launch file.
+      Gazebo loads rm_map.world and builds /map from filtered laser scans and odometry.
+      Default backend is odom_laser. The default autonomous route is one lap.
+    -->
+    <arg name="launch_rviz" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="paused" default="false" />
+    <arg name="autonomous_mapping" default="true" />
+    <arg name="record_trajectory" default="true" />
+    <arg name="enable_slam_monitor" default="true" />
+    <arg name="mapping_backend" default="odom_laser" />
+    <arg name="patrol_repeats" default="1" />
+
+    <arg name="params" default="$(find myrobot_task)/config/task_params.yaml" />
+    <arg name="nav_params" default="$(find myrobot_navigation)/config/slam_navigation_params.yaml" />
+    <arg name="slam_params" default="$(find myrobot_navigation)/config/slam_toolbox_params.yaml" />
+    <arg name="gmapping_params" default="$(find myrobot_navigation)/config/slam_gmapping_params.yaml" />
+    <arg name="slam_toolbox_mode" default="sync" />
+    <arg name="rviz_config" default="$(find myrobot_navigation)/config/slam.rviz" />
+    <arg name="mapping_ignore_goal_hold" default="true" />
+    <arg name="mapping_translation_max_forward_speed" default="0.18" />
+    <arg name="mapping_translation_max_lateral_speed" default="0.14" />
+    <arg name="mapping_separate_rotation" default="true" />
+    <arg name="mapping_rotation_max_speed" default="0.28" />
+    <arg name="mapping_arrival_stable_cycles" default="3" />
+    <arg name="mapping_stop_duration" default="0.20" />
+
+    <arg name="scan_topic" default="/scan_filtered" />
+    <arg name="raw_scan_topic" default="/scan" />
+    <arg name="map_topic" default="/map" />
+    <arg name="base_frame" default="base_footprint" />
+    <arg name="odom_frame" default="odom" />
+    <arg name="map_frame" default="map" />
+
+    <include file="$(find myrobot_simulation)/launch/mycar_gazebo.launch">
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="launch_rviz" value="$(arg launch_rviz)" />
+        <arg name="rviz_config" value="$(arg rviz_config)" />
+        <arg name="publish_fake_joint_states" value="false" />
+        <arg name="enable_planar_drive" value="false" />
+        <arg name="enable_lidar" value="true" />
+        <arg name="enable_camera" value="true" />
+        <arg name="enable_imu" value="true" />
+        <arg name="start_wheel_joint_driver" value="true" />
+        <arg name="sim_driver_publish_odometry" value="true" />
+        <arg name="sim_driver_publish_tf" value="true" />
+        <arg name="sim_driver_control_gazebo_model" value="true" />
+        <arg name="start_sim_monitor" value="false" />
+    </include>
+
+    <node pkg="myrobot_navigation"
+          type="scan_self_filter.py"
+          name="scan_self_filter"
+          output="screen">
+        <param name="input_scan_topic" value="$(arg raw_scan_topic)" />
+        <param name="output_scan_topic" value="$(arg scan_topic)" />
+        <param name="min_valid_range" value="0.20" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'slam_toolbox' and arg('slam_toolbox_mode') == 'sync')"
+          pkg="slam_toolbox"
+          type="sync_slam_toolbox_node"
+          name="slam_toolbox"
+          output="screen">
+        <rosparam command="load" file="$(arg slam_params)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'slam_toolbox' and arg('slam_toolbox_mode') == 'async')"
+          pkg="slam_toolbox"
+          type="async_slam_toolbox_node"
+          name="slam_toolbox"
+          output="screen">
+        <rosparam command="load" file="$(arg slam_params)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'gmapping')"
+          pkg="gmapping"
+          type="slam_gmapping"
+          name="slam_gmapping"
+          output="screen">
+        <remap from="scan" to="$(arg scan_topic)" />
+        <rosparam command="load" file="$(arg gmapping_params)" />
+        <param name="base_frame" value="$(arg base_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+    </node>
+
+    <node if="$(eval arg('mapping_backend') == 'odom_laser')"
+          pkg="myrobot_navigation"
+          type="odom_laser_mapper.py"
+          name="odom_laser_mapper"
+          output="screen">
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="map_topic" value="$(arg map_topic)" />
+        <param name="map_frame" value="$(arg map_frame)" />
+        <param name="odom_frame" value="$(arg odom_frame)" />
+        <param name="resolution" value="0.02" />
+        <param name="xmin" value="-0.70" />
+        <param name="ymin" value="-4.20" />
+        <param name="xmax" value="5.20" />
+        <param name="ymax" value="0.70" />
+        <param name="max_usable_range" value="6.0" />
+        <param name="hit_range_margin" value="0.03" />
+        <param name="min_hit_count" value="3" />
+        <param name="beam_step" value="1" />
+        <param name="min_insert_translation" value="0.035" />
+        <param name="min_insert_rotation" value="0.08" />
+        <param name="traversed_clearance_radius" value="0.08" />
+        <param name="min_component_cells" value="14" />
+        <param name="wall_thickness_cells" value="2" />
+        <param name="max_gap_cells" value="7" />
+        <param name="use_axis_line_filter" value="true" />
+        <param name="hough_threshold" value="16" />
+        <param name="hough_min_line_length" value="12" />
+        <param name="hough_max_line_gap" value="9" />
+        <param name="axis_merge_tolerance_cells" value="5" />
+        <param name="axis_seed_gap_cells" value="5" />
+        <param name="axis_short_min_line_length" value="14" />
+        <param name="axis_short_min_pixels" value="12" />
+        <param name="axis_short_max_thickness_cells" value="6" />
+        <param name="axis_short_min_aspect" value="4.0" />
+        <param name="axis_short_gap_cells" value="4" />
+        <param name="axis_keep_short_segments" value="true" />
+        <param name="axis_angle_tolerance" value="0.10" />
+    </node>
+
+    <node if="$(arg enable_slam_monitor)"
+          pkg="myrobot_navigation"
+          type="slam_status_monitor.py"
+          name="slam_status_monitor"
+          output="screen">
+        <param name="map_topic" value="$(arg map_topic)" />
+        <param name="scan_topic" value="$(arg scan_topic)" />
+        <param name="status_topic" value="/slam_status" />
+    </node>
+
+    <node if="$(arg record_trajectory)"
+          pkg="myrobot_task"
+          type="task_evidence_recorder.py"
+          name="slam_evidence_recorder"
+          output="screen">
+        <rosparam command="load" file="$(arg params)" />
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="visualization_frame" value="$(arg odom_frame)" />
+        <param name="patrol_status_topic" value="/navigation_status" />
+        <param name="trajectory_topic" value="/task_trajectory" />
+        <param name="task_marker_topic" value="/task_markers" />
+    </node>
+
+    <!-- Follow the user-defined navigation route while the selected SLAM backend builds the map. -->
+    <node if="$(arg autonomous_mapping)"
+          pkg="myrobot_navigation"
+          type="move_base_waypoint_navigator.py"
+          name="slam_autonomous_patrol"
+          output="screen">
+        <rosparam command="load" file="$(arg nav_params)" />
+        <param name="navigation_use_direct_path" value="true" />
+        <param name="navigation_use_holonomic_path_follower" value="true" />
+        <param name="navigation_ignore_goal_hold" value="$(arg mapping_ignore_goal_hold)" />
+        <param name="navigation_goal_frame" value="$(arg odom_frame)" />
+        <param name="navigation_control_frame" value="$(arg odom_frame)" />
+        <param name="navigation_separate_rotation" value="$(arg mapping_separate_rotation)" />
+        <param name="navigation_clear_costmaps_on_retry" value="false" />
+        <param name="navigation_stop_on_failure" value="true" />
+        <param name="navigation_startup_stabilization_delay" value="3.0" />
+        <param name="navigation_translation_max_forward_speed" value="$(arg mapping_translation_max_forward_speed)" />
+        <param name="navigation_translation_max_lateral_speed" value="$(arg mapping_translation_max_lateral_speed)" />
+        <param name="navigation_rotation_max_speed" value="$(arg mapping_rotation_max_speed)" />
+        <param name="navigation_rotation_gain" value="0.85" />
+        <param name="navigation_rotation_min_speed" value="0.08" />
+        <param name="navigation_rotation_tolerance" value="0.035" />
+        <param name="navigation_stop_duration" value="$(arg mapping_stop_duration)" />
+        <param name="navigation_arrival_stable_cycles" value="$(arg mapping_arrival_stable_cycles)" />
+        <param name="navigation_patrol_repeats" value="$(arg patrol_repeats)" />
+        <param name="navigation_status_topic" value="/navigation_status" />
+        <param name="patrol_status_topic" value="/navigation_status" />
+    </node>
+</launch>

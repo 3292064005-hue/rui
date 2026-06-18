@@ -1,0 +1,54 @@
+# SLAM-only autonomous mapping route.
+# Keep this denser than the formal patrol route so mapping revisits corridors
+# and gives slam_toolbox enough observations for loop closure.
+move_base_action: /move_base
+navigation_status_topic: /navigation_status
+patrol_status_topic: /navigation_status
+navigation_target_yaw_topic: /navigation_target_yaw
+navigation_goal_frame: map
+navigation_goal_timeout: 90.0
+navigation_server_timeout: 30.0
+navigation_startup_stabilization_delay: 2.0
+navigation_retry_count: 1
+navigation_clear_costmaps_on_retry: true
+navigation_stop_on_failure: false
+navigation_hold_at_goal: 0.8
+navigation_base_frame: base_footprint
+navigation_control_frame: map
+navigation_separate_rotation: false
+navigation_rotation_rate: 20.0
+navigation_rotation_gain: 5.2
+navigation_rotation_max_speed: 2.20
+navigation_rotation_min_speed: 0.36
+navigation_rotation_tolerance: 0.08
+navigation_rotation_timeout: 20.0
+navigation_cmd_vel_target_yaw_filter: false
+navigation_skip_reached_goal_distance: 0.08
+navigation_stop_duration: 0.20
+navigation_use_holonomic_path_follower: true
+navigation_use_direct_path: false
+navigation_make_plan_service: /move_base/make_plan
+navigation_translation_rate: 20.0
+navigation_translation_tolerance: 0.04
+navigation_arrival_stable_cycles: 4
+navigation_translation_gain: 3.40
+navigation_translation_max_forward_speed: 0.80
+navigation_translation_max_lateral_speed: 0.64
+navigation_path_lookahead: 0.30
+navigation_replan_interval: 1.0
+navigation_stuck_timeout: 8.0
+navigation_progress_distance: 0.01
+
+navigation_goals:
+  - {name: left_wall_exit, x: 0.00, y: -3.50, yaw: 0.0000, hold: 0.1}
+  - {name: zone_1_entry, x: 0.52, y: -3.50, yaw: 1.5708, hold: 0.1}
+  - {name: zone_1, x: 0.52, y: -2.55, yaw: 1.5708, hold: 1.5}
+  - {name: left_top_out, x: 0.52, y: -0.58, yaw: 0.0000, hold: 0.1}
+  - {name: top_middle, x: 3.00, y: -0.58, yaw: -1.5708, hold: 0.1}
+  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: 3.1416, hold: 0.1}
+  - {name: right_middle, x: 2.00, y: -2.00, yaw: -1.5708, hold: 0.1}
+  - {name: right_wall_return, x: 2.00, y: -3.50, yaw: 0.0000, hold: 0.1}
+  - {name: bottom_right, x: 4.45, y: -3.50, yaw: 1.5708, hold: 0.1}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw: 1.5708, hold: 1.5, direct_path: true}
+  - {name: right_top_out, x: 4.45, y: -0.00, yaw: 1.5708, hold: 0.1, direct_path: true}
+  - {name: finish, x: 0.0, y: -0.00, yaw: 3.1416, hold: 0.1}

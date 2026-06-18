@@ -31,7 +31,7 @@ Gazebo 传感器
 ## 2. 一键启动完整仿真
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash

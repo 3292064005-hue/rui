@@ -139,18 +139,18 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/PoseArray
-      Alpha: 0.8
-      Arrow Length: 0.25
-      Axes Length: 0.25
-      Axes Radius: 0.02
+      Alpha: 0.25
+      Arrow Length: 0.08
+      Axes Length: 0.08
+      Axes Radius: 0.01
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Name: AMCL Particles
       Shaft Length: 0.1
       Shape: Arrow (Flat)
       Topic: /particlecloud
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /task_markers

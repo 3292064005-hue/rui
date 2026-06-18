@@ -2,9 +2,9 @@
     <!--
       Map-based autonomous navigation stack:
       Gazebo original world + map_server + AMCL + move_base.
-      The default navigation map is the saved SLAM result in maps/raicom_slam_map_01.yaml.
+      The default navigation map is the latest saved SLAM result in maps/raicom_slam_map_one_lap_test.yaml.
     -->
-    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_01.yaml" />
+    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_one_lap_test.yaml" />
     <arg name="nav_params" default="$(find myrobot_navigation)/config/navigation_params.yaml" />
     <arg name="world_name" default="$(find myrobot_description)/worlds/rm_map.world" />
     <arg name="launch_rviz" default="true" />

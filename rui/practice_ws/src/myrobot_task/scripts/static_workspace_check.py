@@ -233,11 +233,12 @@ def check_recognition(errors):
 
 def check_navigation(errors):
     nav = package_root('myrobot_navigation')
-    map_yaml = nav / 'maps' / 'raicom_slam_map_01.yaml'
-    map_pgm = nav / 'maps' / 'raicom_slam_map_01.pgm'
+    map_name = 'raicom_slam_map_one_lap_test'
+    map_yaml = nav / 'maps' / (map_name + '.yaml')
+    map_pgm = nav / 'maps' / (map_name + '.pgm')
     if map_yaml.exists() and map_pgm.exists():
         yaml_text = map_yaml.read_text(errors='ignore')
-        if 'image: raicom_slam_map_01.pgm' in yaml_text and 'resolution:' in yaml_text and 'origin:' in yaml_text:
+        if ('image: %s.pgm' % map_name) in yaml_text and 'resolution:' in yaml_text and 'origin:' in yaml_text:
             print('[OK] navigation map yaml:', map_yaml.relative_to(workspace_src()))
         else:
             errors.append('navigation map yaml is missing image/resolution/origin fields')
@@ -252,7 +253,7 @@ def check_navigation(errors):
         except Exception as exc:
             errors.append('navigation map pgm cannot be read: %s' % exc)
 
-    expected_map_default = 'maps/raicom_slam_map_01.yaml'
+    expected_map_default = 'maps/%s.yaml' % map_name
     launch_checks = [
         nav / 'launch' / 'navigation.launch',
         nav / 'launch' / 'autonomous_navigation.launch',
@@ -290,7 +291,7 @@ def check_navigation(errors):
     navigation_text = (nav / 'config' / 'navigation_params.yaml').read_text(errors='ignore')
     for phrase, label in [
             ('navigation_use_holonomic_path_follower: false', 'formal navigation uses TEB'),
-            ('navigation_use_internal_route: true', 'formal navigation uses internal route'),
+            ('navigation_use_internal_route: false', 'formal navigation lets move_base choose transitions'),
             ('navigation_separate_rotation: false', 'formal navigation avoids separate yaw goals'),
             ('navigation_cmd_vel_target_yaw_filter: false', 'formal navigation leaves angular velocity to TEB'),
             ('navigation_path_velocity_filter: false', 'formal navigation leaves translational velocity to TEB')]:
@@ -351,7 +352,7 @@ def main():
         package_root('myrobot_navigation') / 'launch' / 'save_slam_map.launch',
         package_root('myrobot_navigation') / 'config' / 'navigation_params.yaml',
         package_root('myrobot_navigation') / 'config' / 'base_local_planner_params.yaml',
-        package_root('myrobot_navigation') / 'maps' / 'raicom_slam_map_01.yaml',
+        package_root('myrobot_navigation') / 'maps' / 'raicom_slam_map_one_lap_test.yaml',
         package_root('myrobot_recognition') / 'scripts' / 'battlefield_recognition.py',
         package_root('myrobot_task') / 'launch' / 'task_patrol.launch',
         package_root('myrobot_task') / 'config' / 'task_params.yaml',

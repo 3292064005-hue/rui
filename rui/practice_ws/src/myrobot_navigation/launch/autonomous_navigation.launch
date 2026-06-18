@@ -3,7 +3,7 @@
       Full autonomous task using the ROS navigation stack:
       map_server + AMCL + move_base + sequential navigation goals + recognition + evidence logs.
     -->
-    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_01.yaml" />
+    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_one_lap_test.yaml" />
     <arg name="params" default="$(find myrobot_task)/config/task_params.yaml" />
     <arg name="nav_params" default="$(find myrobot_navigation)/config/navigation_params.yaml" />
     <arg name="launch_rviz" default="true" />

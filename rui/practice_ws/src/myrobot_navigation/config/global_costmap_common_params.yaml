@@ -5,8 +5,9 @@ footprint: [[0.10, 0.09], [0.10, -0.09], [-0.10, -0.09], [-0.10, 0.09]]
 footprint_padding: 0.00
 
 transform_tolerance: 0.5
-inflation_radius: 0.15
-cost_scaling_factor: 5.0
+# Keep a light buffer from walls without making narrow corridors look blocked.
+inflation_radius: 0.22
+cost_scaling_factor: 4.0
 
 plugins:
   - {name: static_layer, type: "costmap_2d::StaticLayer"}

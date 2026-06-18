@@ -1,6 +1,6 @@
 # SLAM-only autonomous mapping route.
 # Keep this denser than the formal patrol route so mapping revisits corridors
-# and gives slam_toolbox enough observations for loop closure.
+# and gives odom_laser_mapper enough observations to complete boundary lines.
 move_base_action: /move_base
 navigation_status_topic: /navigation_status
 patrol_status_topic: /navigation_status

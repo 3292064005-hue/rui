@@ -1,6 +1,6 @@
 # practice_ws 使用说明
 
-本工作空间是一个 ROS1 + Gazebo 仿真项目，核心包为 `myrobot_description`。项目已配置机器人模型、Gazebo 仿真、传感器接口、SLAM 建图、自主导航、任务巡检、识别结果输出和运行证据记录。
+本工作空间是一个 ROS1 + Gazebo 仿真项目，按功能拆成模型、仿真、建图导航、识别和任务记录多个包。项目已配置机器人模型、Gazebo 仿真、传感器接口、SLAM 建图、自主导航、任务巡检、识别结果输出和运行证据记录。
 
 > 说明：当前 `worlds/rm_map.world` 已加入两块仅视觉识别面板，不包含
 > 碰撞几何，不改变可通行区域。路径、导航和识别参数优先在 `config/`
@@ -14,19 +14,12 @@
 practice_ws/
 ├── README.md                         # 工作空间总说明
 └── src/
-    └── myrobot_description/
-        ├── README.md                 # 包级总说明
-        ├── README_SIMULATION.md      # Gazebo 仿真接口说明
-        ├── README_SLAM.md            # slam_toolbox 建图与对比后端说明
-        ├── README_NAVIGATION.md      # AMCL + move_base 自主导航说明
-        ├── README_TASK.md            # 巡检识别任务说明
-        ├── launch/                   # 启动文件
-        ├── config/                   # 参数和 RViz 配置
-        ├── maps/                     # 导航用静态地图
-        ├── scripts/                  # Python 节点
-        ├── urdf/                     # 机器人模型
-        ├── meshes/                   # STL 模型文件
-        └── worlds/                   # Gazebo 世界文件
+    ├── myrobot_description/          # URDF/Xacro、材质、Gazebo 世界
+    ├── myrobot_simulation/           # Gazebo 启动、底盘仿真驱动、传感器健康检查
+    ├── myrobot_navigation/           # 建图、保存地图、AMCL + move_base 导航
+    ├── myrobot_recognition/          # YOLO/ONNX 识别节点、权重、模板
+    ├── myrobot_task/                 # 巡检任务、证据记录、任务总结
+    └── my_teleop_keyboard/           # 键盘遥控节点
 ```
 
 ---
@@ -34,6 +27,20 @@ practice_ws/
 ## 2. 环境依赖
 
 当前工程按 Ubuntu 20.04 + ROS Noetic + Python 3.8 验证。
+
+如果宿主机无法安装 ROS1 Noetic，推荐使用外层工作区的 Docker 环境：
+
+```bash
+cd /home/chen/ros1_ultrasound_ws
+bash docker/build_noetic.sh
+bash docker/run_noetic.sh
+```
+
+容器内会自动进入：
+
+```text
+/workspace/rui/rui/practice_ws
+```
 
 安装基础依赖：
 
@@ -51,7 +58,6 @@ sudo apt install \
   ros-$ROS_DISTRO-amcl \
   ros-$ROS_DISTRO-move-base \
   ros-$ROS_DISTRO-navigation \
-  ros-$ROS_DISTRO-slam-toolbox \
   ros-$ROS_DISTRO-slam-gmapping \
   ros-$ROS_DISTRO-cv-bridge \
   python3-opencv \
@@ -63,7 +69,7 @@ sudo apt install \
 ## 3. 编译
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -72,7 +78,7 @@ source devel/setup.bash
 如果重新打开终端，仍需执行：
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 source devel/setup.bash
 ```
@@ -83,14 +89,14 @@ source devel/setup.bash
 
 | 目标 | 命令 |
 |---|---|
-| 只查看模型 | `roslaunch myrobot_description 1.launch` |
-| 启动完整 Gazebo 仿真 | `roslaunch myrobot_description full_simulation.launch` |
-| 测试底盘、轮子、雷达、相机、IMU | `roslaunch myrobot_description test_sim_drivers.launch` |
-| 自动巡点与识别演示 | `roslaunch myrobot_description task_patrol.launch` |
-| SLAM 建图 | `roslaunch myrobot_description slam_mapping.launch` |
-| 保存 SLAM 地图 | `roslaunch myrobot_description save_slam_map.launch` |
-| 启动导航栈，手动点目标 | `roslaunch myrobot_description navigation.launch` |
-| 一键自主导航任务 | `roslaunch myrobot_description autonomous_navigation.launch` |
+| 只查看模型 | `roslaunch myrobot_simulation 1.launch` |
+| 启动完整 Gazebo 仿真 | `roslaunch myrobot_simulation full_simulation.launch` |
+| 测试底盘、轮子、雷达、相机、IMU | `roslaunch myrobot_simulation test_sim_drivers.launch` |
+| 自动巡点与识别演示 | `roslaunch myrobot_task task_patrol.launch` |
+| SLAM 建图 | `roslaunch myrobot_navigation slam_mapping.launch` |
+| 保存 SLAM 地图 | `roslaunch myrobot_navigation save_slam_map.launch` |
+| 启动导航栈，手动点目标 | `roslaunch myrobot_navigation navigation.launch` |
+| 一键自主导航任务 | `roslaunch myrobot_navigation autonomous_navigation.launch` |
 
 ---
 
@@ -99,7 +105,7 @@ source devel/setup.bash
 ### 第一步：确认模型能显示
 
 ```bash
-roslaunch myrobot_description 1.launch
+roslaunch myrobot_simulation 1.launch
 ```
 
 RViz 中应能看到机器人模型、轮子、雷达和相机坐标系。
@@ -107,7 +113,7 @@ RViz 中应能看到机器人模型、轮子、雷达和相机坐标系。
 ### 第二步：确认仿真驱动正常
 
 ```bash
-roslaunch myrobot_description test_sim_drivers.launch
+roslaunch myrobot_simulation test_sim_drivers.launch
 ```
 
 检查话题：
@@ -124,19 +130,19 @@ rostopic echo /simulation_health
 ### 第三步：运行 SLAM 建图
 
 ```bash
-roslaunch myrobot_description slam_mapping.launch
+roslaunch myrobot_navigation slam_mapping.launch
 ```
 
 建图完成后保存：
 
 ```bash
-roslaunch myrobot_description save_slam_map.launch
+roslaunch myrobot_navigation save_slam_map.launch
 ```
 
 ### 第四步：运行自主导航
 
 ```bash
-roslaunch myrobot_description autonomous_navigation.launch
+roslaunch myrobot_navigation autonomous_navigation.launch
 ```
 
 查看状态：
@@ -150,7 +156,7 @@ rostopic echo /move_base/status
 ### 第五步：查看任务结果
 
 ```bash
-rosrun myrobot_description latest_mission_summary.py
+rosrun myrobot_task latest_mission_summary.py
 ```
 
 任务日志默认保存在：
@@ -188,15 +194,15 @@ rosrun myrobot_description latest_mission_summary.py
 
 | 要修改的内容 | 文件 |
 |---|---|
-| 正式巡航目标点 | `src/myrobot_description/config/navigation_params.yaml` |
-| 建图巡航目标点 | `src/myrobot_description/config/slam_navigation_params.yaml` |
-| 识别区、识别模型参数 | `src/myrobot_description/config/task_params.yaml` |
-| SLAM 参数 | `src/myrobot_description/config/slam_toolbox_params.yaml`、`src/myrobot_description/launch/slam_mapping.launch` |
-| 兵人识别权重 | `src/myrobot_description/recognition_weights/` |
-| AMCL 参数 | `src/myrobot_description/config/amcl_params.yaml` |
-| move_base 参数 | `src/myrobot_description/config/move_base_params.yaml` |
-| 代价地图参数 | `src/myrobot_description/config/*costmap*_params.yaml` |
-| 仿真轮子参数 | `src/myrobot_description/config/simulation_params.yaml` |
+| 正式巡航目标点 | `src/myrobot_navigation/config/navigation_params.yaml` |
+| 建图巡航目标点 | `src/myrobot_navigation/config/slam_navigation_params.yaml` |
+| 识别区、识别模型参数 | `src/myrobot_task/config/task_params.yaml` |
+| SLAM 参数 | `src/myrobot_navigation/launch/slam_mapping.launch`，对比后端参数见 `src/myrobot_navigation/config/slam_*.yaml` |
+| 兵人识别权重 | `src/myrobot_recognition/recognition_weights/` |
+| AMCL 参数 | `src/myrobot_navigation/config/amcl_params.yaml` |
+| move_base 参数 | `src/myrobot_navigation/config/move_base_params.yaml` |
+| 代价地图参数 | `src/myrobot_navigation/config/*costmap*_params.yaml` |
+| 仿真轮子参数 | `src/myrobot_simulation/config/simulation_params.yaml` |
 | 机器人模型 | `src/myrobot_description/urdf/turtlebot3_mecanum.urdf.xacro` |
 
 ---
@@ -206,9 +212,9 @@ rosrun myrobot_description latest_mission_summary.py
 建议按以下顺序阅读。参数数值以 `config/*.yaml` 和 `launch/*.launch`
 为最终依据，文档中的片段仅用于说明：
 
-1. `src/myrobot_description/README.md`：项目总说明；
-2. `src/myrobot_description/README_SIMULATION.md`：仿真驱动和传感器；
-3. `src/myrobot_description/README_SLAM.md`：建图流程；
-4. `src/myrobot_description/README_NAVIGATION.md`：自主导航流程；
-5. `src/myrobot_description/README_TASK.md`：任务演示和结果记录；
+1. `src/myrobot_description/README.md`：模型和场景说明；
+2. `src/myrobot_simulation/README_DETAILS.md`：仿真驱动和传感器；
+3. `src/myrobot_navigation/README_SLAM.md`：建图流程；
+4. `src/myrobot_navigation/README.md`：自主导航流程；
+5. `src/myrobot_task/README_TASK.md`：任务演示和结果记录；
 6. `REPORT.md`：比赛技术报告、算法说明与验收数据。

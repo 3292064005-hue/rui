@@ -4,16 +4,15 @@
 
 本项目面向 RAICOM 智能侦察仿真任务，基于 Ubuntu、ROS1 Noetic、
 Gazebo Classic 和 Python 实现四轮麦克纳姆机器人仿真系统。系统包含
-自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、`slam_toolbox`
-图优化建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
+自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、`odom_laser`
+轴线建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
 敌军/友军/人质识别以及任务证据记录。
 
 机器人正式巡检按照 `navigation_params.yaml` 中的 `start`、`zone_1`、
 `zone_2`、`finish` 4 个目标点执行；建图阶段使用
 `slam_navigation_params.yaml` 中的 12 个覆盖点完成场地扫描。当前默认
-SLAM 后端为 `slam_toolbox`，使用 `/scan_filtered`、
-`/odom` 和 TF 建立 pose graph，并通过 Ceres 优化与回环检测修正累计
-误差。仓库保留的最终导航地图分辨率约 0.02m，地图尺寸为 263 × 206，
+SLAM 后端为 `odom_laser`，使用 `/scan_filtered`、
+`/odom` 和 TF 做轴线投影与固定边界建图。仓库保留的最终导航地图分辨率约 0.02m，地图尺寸为 263 × 206，
 原点约为 (-0.488, -3.815)。
 
 ## 1. 任务理解
@@ -39,24 +38,24 @@ Gazebo 世界与机器人模型
   ├─ /imu/data
   └─ /joint_states
         ↓
-建图：slam_toolbox -> /map
+建图：odom_laser_mapper -> /map
 导航：map_server + AMCL + move_base
 巡检：move_base_waypoint_navigator
 识别：battlefield_recognition
 记录：task_evidence_recorder
 ```
 
-主要软件模块位于 `src/myrobot_description/`：
+主要软件模块位于 `src/` 下的功能包：
 
 | 模块 | 文件 |
 |---|---|
-| 机器人模型 | `urdf/turtlebot3_mecanum.urdf.xacro` |
-| Gazebo 场景 | `worlds/rm_map.world` |
-| 麦克纳姆仿真接口 | `scripts/mecanum_sim_driver.py` |
-| 建图 | `slam_toolbox`，参数见 `config/slam_toolbox_params.yaml` |
-| 导航巡点 | `scripts/move_base_waypoint_navigator.py` |
-| 图像识别 | `scripts/battlefield_recognition.py` |
-| 证据记录 | `scripts/task_evidence_recorder.py` |
+| 机器人模型 | `myrobot_description/urdf/turtlebot3_mecanum.urdf.xacro` |
+| Gazebo 场景 | `myrobot_description/worlds/rm_map.world` |
+| 麦克纳姆仿真接口 | `myrobot_simulation/scripts/mecanum_sim_driver.py` |
+| 建图 | `myrobot_navigation/scripts/odom_laser_mapper.py` |
+| 导航巡点 | `myrobot_navigation/scripts/move_base_waypoint_navigator.py` |
+| 图像识别 | `myrobot_recognition/scripts/battlefield_recognition.py` |
+| 证据记录 | `myrobot_task/scripts/task_evidence_recorder.py` |
 
 ## 3. 机器人模型与麦克纳姆运动
 
@@ -87,49 +86,48 @@ wz：原地旋转角速度
 
 传统 gmapping 在本场地的长直、重复走廊中可能产生错误 scan matching
 修正，表现为地图旋转、重影、假闭环和画布异常膨胀。项目现在默认采用
-`slam_toolbox`，用 pose graph、回环检测和 Ceres 优化替代单纯逐帧匹配。
+`odom_laser`，结合里程计、过滤激光、固定场地边界和轴线投影生成稳定栅格图。
 
 ### 4.2 建图算法
 
-`slam_toolbox` 使用 `odom -> base_scan` 的 TF 和 `/scan_filtered` 激光建立
-2D 位姿图：
+`odom_laser` 使用 `/odom`、TF 和 `/scan_filtered` 激光建立 2D 栅格图：
 
-1. 根据里程计预测和激光匹配生成节点约束；
-2. 对相邻激光帧建立局部匹配边；
-3. 在重复巡航时搜索回环约束；
-4. 使用 Ceres 求解全局位姿图；
-5. 按 0.02m 分辨率发布 `/map`；
-6. 使用 `/scan_filtered` 去掉车体近场回波，降低假障碍。
+1. 自动建图巡航在 `odom` 坐标系下低速直控走完覆盖点；
+2. `scan_self_filter.py` 生成 `/scan_filtered`，去掉车体近场回波；
+3. `odom_laser_mapper.py` 按里程计位姿把激光命中写入 0.02m 栅格；
+4. 根据规则场地的水平/垂直边界做轴线过滤、合并和补线；
+5. 发布 `/map`，供 RViz 查看并由 `save_slam_map.launch` 保存；
+6. `slam_toolbox` 与 `gmapping` 保留为对比后端。
 
 仿真专用固定边界 mapper 和传统 gmapping 仍可作为对照：
 
 ```bash
-roslaunch myrobot_description slam_mapping.launch mapping_backend:=odom_laser
-roslaunch myrobot_description slam_mapping.launch mapping_backend:=gmapping
+roslaunch myrobot_navigation slam_mapping.launch mapping_backend:=odom_laser
+roslaunch myrobot_navigation slam_mapping.launch mapping_backend:=gmapping
 ```
 
 ### 4.3 建图结果
 
 | 指标 | 结果 |
 |---|---:|
-| 默认后端 | slam_toolbox |
+| 默认后端 | odom_laser |
 | 地图尺寸 | 263 × 206 |
 | 分辨率 | 约 0.02m |
 | 原点 | 约 (-0.488, -3.815) |
 | 建图单圈目标 | 12 |
 | 正式巡航目标 | 4 |
-| 默认建图巡航 | 2 圈 |
-| 回环优化 | 开启 |
+| 默认建图巡航 | 1 圈 |
+| 回环优化 | 对比后端可用，默认不依赖 |
 | 导航地图 | `raicom_slam_map_final.yaml` |
 
 最终地图：
 
 ```text
-src/myrobot_description/maps/raicom_slam_map_final.pgm
-src/myrobot_description/maps/raicom_slam_map_final.yaml
+src/myrobot_navigation/maps/raicom_slam_map_final.pgm
+src/myrobot_navigation/maps/raicom_slam_map_final.yaml
 ```
 
-![最终 SLAM 地图](src/myrobot_description/maps/raicom_slam_map_final.png)
+![最终 SLAM 地图](src/myrobot_navigation/maps/raicom_slam_map_final.png)
 
 ## 5. 自主导航与巡检
 
@@ -169,8 +167,8 @@ src/myrobot_description/maps/raicom_slam_map_final.yaml
 正式模型文件：
 
 ```text
-src/myrobot_description/recognition_weights/best.pt
-src/myrobot_description/recognition_weights/best.onnx
+src/myrobot_recognition/recognition_weights/best.pt
+src/myrobot_recognition/recognition_weights/best.onnx
 ```
 
 配置示例：
@@ -215,16 +213,16 @@ recognition_frames/*_annotated.jpg
 
 ```bash
 catkin_make
-python3 -m py_compile src/myrobot_description/scripts/*.py
-rosrun myrobot_description static_workspace_check.py
+python3 -m py_compile src/myrobot_navigation/scripts/*.py src/myrobot_task/scripts/*.py src/myrobot_recognition/scripts/*.py src/myrobot_simulation/scripts/*.py
+rosrun myrobot_task static_workspace_check.py
 ```
 
 运行测试：
 
 ```bash
-roslaunch myrobot_description slam_mapping.launch
-roslaunch myrobot_description autonomous_navigation.launch
-roslaunch myrobot_description task_patrol.launch
+roslaunch myrobot_navigation slam_mapping.launch
+roslaunch myrobot_navigation autonomous_navigation.launch
+roslaunch myrobot_task task_patrol.launch
 ```
 
 关键验收话题：
@@ -238,7 +236,7 @@ rostopic echo /recognition_summary
 
 ## 9. 创新点
 
-1. 将默认 SLAM 升级为 `slam_toolbox` 图优化建图，支持回环检测和 Ceres 优化；
+1. 将默认建图切换为 `odom_laser` 轴线建图，适配规则仿真场地并降低地图重影；
 2. 麦克纳姆正式巡航采用 DWA 全向局部规划，平移与转向联合优化；
 3. YOLO 整帧与重叠分块推理兼顾单目标和宽画面多目标；
 4. 建图、导航、识别和证据日志形成完整可追溯任务链。
@@ -247,15 +245,15 @@ rostopic echo /recognition_summary
 
 - 录制 rosbag 后离线比较 `slam_toolbox`、`odom_laser` 和 `gmapping` 的地图误差；
 - 增加自动地图质量评分，例如边界完整度、走廊误占据率和闭环残差；
-- 根据比赛现场机器性能调整 `slam_toolbox` 同步/异步模式和回环阈值；
+- 根据比赛现场机器性能调整 `odom_laser` 轴线过滤阈值，并保留 `slam_toolbox` 离线对比；
 - 增加独立识别测试集混淆矩阵、准确率和召回率。
 
 ## 11. 演示命令
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
-roslaunch myrobot_description task_patrol.launch
+roslaunch myrobot_task task_patrol.launch
 ```

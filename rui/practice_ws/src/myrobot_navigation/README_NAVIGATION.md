@@ -50,7 +50,7 @@ sudo apt install \
 ## 3. 启动导航栈，手动给目标
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -125,13 +125,13 @@ myrobot_navigation/config/navigation_params.yaml
 navigation_goals:
   - {name: zone_1, x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
   - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.1}
-  - {name: finish, x: 0.30, y: -0.08, yaw:  3.1416, hold: 0.1}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
+  - {name: finish, x: 0.25, y: 0.00, yaw:  3.1416, hold: 0.1}
 ```
 
-正式巡航默认只保留完整路线中的第 3、6、13 个导航点：
-`zone_1`、`right_wall_exit`、`finish`。
-程序内部会把长路径切成更小的 move_base 子目标，减少 TEB 一次性无可行轨迹的概率。
-这些内部过渡点配置在 `navigation_internal_route`，不会改变正式导航点数量。
+正式巡航只配置任务语义目标，不显式写拐角过渡点。
+`move_base` 在巡航时根据静态地图、GlobalPlanner 和 TebLocalPlannerROS
+自行规划每一段路径。
 建图覆盖路线单独维护在 `myrobot_navigation/config/slam_navigation_params.yaml`。
 
 字段说明：

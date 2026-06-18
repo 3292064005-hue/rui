@@ -61,7 +61,7 @@ sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
 ## 3. 一键自动建图
 
 ```bash
-cd ~/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -139,7 +139,7 @@ roslaunch myrobot_navigation slam_mapping.launch autonomous_mapping:=false
 
 ```bash
 source /opt/ros/noetic/setup.bash
-source ~/practice_ws/devel/setup.bash
+source /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws/devel/setup.bash
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
@@ -159,7 +159,7 @@ angular.z  旋转
 
 ```bash
 source /opt/ros/noetic/setup.bash
-source ~/practice_ws/devel/setup.bash
+source /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws/devel/setup.bash
 roslaunch myrobot_navigation save_slam_map.launch
 ```
 
@@ -216,7 +216,7 @@ rosrun tf tf_echo odom base_footprint
 rosrun tf tf_echo base_link base_scan
 ```
 
-如果 TF 不通，`slam_toolbox` 无法稳定输出地图。
+如果 TF 不通，`odom_laser_mapper` 无法把激光正确投影到 `/map`。
 
 ---
 
@@ -227,7 +227,7 @@ rosrun tf tf_echo base_link base_scan
 检查：
 
 ```bash
-rosnode list | grep slam_toolbox
+rosnode list | grep odom_laser_mapper
 rostopic echo /scan_filtered -n 1
 rostopic echo /map -n 1
 ```
@@ -237,13 +237,13 @@ rostopic echo /map -n 1
 
 ### 9.2 地图变形或重影
 
-优先调 `myrobot_navigation/config/slam_toolbox_params.yaml`：
+优先调 `slam_mapping.launch` 中 `odom_laser_mapper.py` 的建图参数：
 
-```yaml
-minimum_travel_distance: 0.08
-minimum_travel_heading: 0.12
-loop_match_minimum_response_fine: 0.45
-correlation_search_space_dimension: 0.60
+```xml
+<param name="min_insert_translation" value="0.035" />
+<param name="min_insert_rotation" value="0.08" />
+<param name="max_gap_cells" value="7" />
+<param name="axis_angle_tolerance" value="0.10" />
 ```
 
 如果机器人运动过快，也可降低 `slam_mapping.launch` 中自动巡航速度参数。
@@ -276,6 +276,6 @@ SLAM 功能正常时，应满足：
 1. `/scan_filtered` 有数据；
 2. `/odom` 有数据；
 3. `tf_echo odom base_footprint` 正常；
-4. `rosnode list` 能看到 `/slam_toolbox`；
+4. `rosnode list` 能看到 `/odom_laser_mapper`；
 5. RViz 中能看到 `/map` 逐渐生成；
 6. `save_slam_map.launch` 能生成 `.pgm` 和 `.yaml` 文件。

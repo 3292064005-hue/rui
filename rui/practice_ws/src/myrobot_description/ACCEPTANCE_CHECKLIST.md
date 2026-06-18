@@ -3,7 +3,7 @@
 ## 构建与静态检查
 
 ```bash
-cd /root/workspace/rui/rui/practice_ws
+cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash

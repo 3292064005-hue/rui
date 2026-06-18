@@ -4,7 +4,7 @@
       This launch now uses the ROS navigation stack instead of the simple /cmd_vel patrol controller.
       The legacy simple controller version is kept in task_patrol_simple.launch.
     -->
-    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_01.yaml" />
+    <arg name="map_file" default="$(find myrobot_navigation)/maps/raicom_slam_map_one_lap_test.yaml" />
     <arg name="params" default="$(find myrobot_task)/config/task_params.yaml" />
     <arg name="nav_params" default="$(find myrobot_navigation)/config/navigation_params.yaml" />
     <arg name="launch_rviz" default="true" />

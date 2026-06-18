@@ -275,10 +275,10 @@ def check_navigation(errors):
         print('[OK] SLAM uses dedicated mapping route')
     else:
         errors.append('slam_mapping.launch does not default to slam_navigation_params.yaml')
-    if '<arg name="mapping_backend" default="odom_laser" />' in slam_launch_text:
-        print('[OK] default SLAM backend: odom_laser')
+    if '<arg name="mapping_backend" default="slam_toolbox" />' in slam_launch_text:
+        print('[OK] default SLAM backend: slam_toolbox')
     else:
-        errors.append('slam_mapping.launch does not default to odom_laser')
+        errors.append('slam_mapping.launch does not default to slam_toolbox')
 
     formal_goals = navigation_goal_names(nav / 'config' / 'navigation_params.yaml')
     expected_formal_goals = ['zone_1', 'right_wall_exit', 'zone_2', 'finish']

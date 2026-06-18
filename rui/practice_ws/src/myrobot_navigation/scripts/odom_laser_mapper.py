@@ -378,6 +378,10 @@ class OdomLaserMapper(object):
                 occupied, cv2.MORPH_CLOSE,
                 np.ones((gap, 1), dtype=np.uint8))
             occupied = np.maximum(horizontal, vertical)
+        # The axis-line post filter can bridge a real opening if both sides of
+        # a doorway look like one wall segment. Robot-traversed cells are direct
+        # free-space evidence, so clear them again after all wall completion.
+        occupied[traversed.astype(bool)] = 0
         occupied = occupied.astype(bool)
         free = np.logical_and(observed, ~occupied)
         values[free] = 0

@@ -1,7 +1,7 @@
 <launch>
     <!-- Save the current /map once. Start after slam_mapping.launch has produced a complete map. -->
     <arg name="output_dir" default="$(find myrobot_navigation)/maps" />
-    <arg name="map_name" default="raicom_slam_map_01" />
+    <arg name="map_name" default="raicom_slam_map_one_lap_test" />
     <arg name="map_topic" default="/map" />
     <arg name="timeout" default="15.0" />
 

@@ -18,45 +18,48 @@ scan_topic: /scan_filtered
 mode: mapping
 debug_logging: false
 throttle_scans: 1
-transform_publish_period: 0.02
-map_update_interval: 0.9
+transform_publish_period: 0.03
+map_update_interval: 0.8
 resolution: 0.02
-max_laser_range: 5.8
-minimum_time_interval: 0.20
+max_laser_range: 4.2
+minimum_time_interval: 0.15
 transform_timeout: 0.3
 tf_buffer_duration: 30.0
 stack_size_to_use: 40000000
 enable_interactive_mode: true
 
 # General mapping parameters.
-use_scan_matching: true
-use_scan_barycenter: true
-minimum_travel_distance: 0.12
-minimum_travel_heading: 0.12
+# In this Gazebo task the odometry is deterministic. Disabling scan matching
+# avoids a slam_toolbox/Karto probability-search crash while still producing a
+# stable high-resolution occupancy map from /odom + /scan_filtered.
+use_scan_matching: false
+use_scan_barycenter: false
+minimum_travel_distance: 0.06
+minimum_travel_heading: 0.05
 scan_buffer_size: 10
-scan_buffer_maximum_scan_distance: 8.5
-link_match_minimum_response_fine: 0.1
-link_scan_maximum_distance: 1.5
-loop_search_maximum_distance: 3.0
+scan_buffer_maximum_scan_distance: 4.5
+link_match_minimum_response_fine: 0.35
+link_scan_maximum_distance: 0.8
+loop_search_maximum_distance: 2.0
 do_loop_closing: false
 loop_match_minimum_chain_size: 10
-loop_match_maximum_variance_coarse: 3.0
-loop_match_minimum_response_coarse: 0.35
-loop_match_minimum_response_fine: 0.45
+loop_match_maximum_variance_coarse: 2.0
+loop_match_minimum_response_coarse: 0.30
+loop_match_minimum_response_fine: 0.40
 
 # Correlation parameters.
-correlation_search_space_dimension: 0.5
+correlation_search_space_dimension: 0.25
 correlation_search_space_resolution: 0.01
-correlation_search_space_smear_deviation: 0.1
+correlation_search_space_smear_deviation: 0.05
 
 # Loop closure search parameters.
-loop_search_space_dimension: 8.0
+loop_search_space_dimension: 4.0
 loop_search_space_resolution: 0.05
 loop_search_space_smear_deviation: 0.03
 
 # Scan matcher parameters.
-distance_variance_penalty: 0.5
-angle_variance_penalty: 1.0
+distance_variance_penalty: 0.8
+angle_variance_penalty: 1.2
 fine_search_angle_offset: 0.00349
 coarse_search_angle_offset: 0.349
 coarse_angle_resolution: 0.0349

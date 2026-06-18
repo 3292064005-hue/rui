@@ -1,17 +1,14 @@
-# Local planning follows the global static-map route. The obstacle layer is kept
-# subscribed for visualization/clearing, but it does not mark laser points into
-# the rolling local costmap. In this static Gazebo task, letting TEB collide
-# against dense laser cells near narrow map walls causes repeated false
-# "trajectory is not feasible" warnings.
-footprint: [[0.10, 0.09], [0.10, -0.09], [-0.10, -0.09], [-0.10, 0.09]]
-footprint_padding: 0.00
+# Keep the local map lightweight. Static walls are handled by the global map;
+# runtime global-plan subgoals keep TEB from cutting across corners.
+footprint: [[0.11, 0.10], [0.11, -0.10], [-0.11, -0.10], [-0.11, 0.10]]
+footprint_padding: 0.01
 
 obstacle_range: 2.8
 raytrace_range: 3.2
 transform_tolerance: 0.5
 
-inflation_radius: 0.40
-cost_scaling_factor: 3.0
+inflation_radius: 0.20
+cost_scaling_factor: 2.8
 
 plugins:
   - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}

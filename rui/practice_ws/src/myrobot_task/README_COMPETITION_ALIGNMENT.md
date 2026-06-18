@@ -9,7 +9,7 @@
   - `zone_1` 面板内容为 `1 敌军 + 1 友军`
   - `zone_2` 面板内容为 `2 敌军 + 1 人质`
 - 识别节点使用 `/camera/image_raw` 和正式 YOLO ONNX 检测权重。
-- SLAM 默认使用 `odom_laser`，基于 `/scan_filtered + /odom + TF` 做规则场地轴线建图。
+- SLAM 默认使用 `slam_toolbox`，基于 `/scan_filtered + /odom + TF` 做稳定高分辨率建图。
 - 自主导航仍使用 `map_server + AMCL + move_base`。
 
 ## 2. 为什么识别面板不影响建图和导航

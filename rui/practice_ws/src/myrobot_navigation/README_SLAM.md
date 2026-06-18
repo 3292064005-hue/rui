@@ -6,7 +6,7 @@
 
 ## 1. 当前默认方案
 
-默认建图后端是 `odom_laser`：
+默认建图后端是 `slam_toolbox`：
 
 ```text
 Gazebo 原始世界
@@ -15,23 +15,23 @@ Gazebo 原始世界
   ↓
 /odom + TF + /scan_filtered
   ↓
-odom_laser 轴线建图和边界投影
+slam_toolbox 稳定建图配置，使用 /odom + /scan_filtered 输出栅格地图
   ↓
 /map
   ↓
-save_slam_map.py 保存 .pgm + .yaml
+save_slam_map.py 保存 .pgm + .png + .yaml
 ```
 
-选择 `odom_laser` 的原因：
+选择 `slam_toolbox` 的原因：
 
-- 规则比赛场地边界和轴线是固定的，适合直接做几何投影；
-- 输出更干净，便于在仿真中快速得到稳定的参考栅格图；
-- 已集成到 `slam_mapping.launch`，无需额外图优化后端。
+- 保留 `slam_toolbox` 建图链路，不再手工拟合墙线，开放口不容易被后处理补死；
+- 当前仿真里 odom 稳定，默认关闭 scan matching 概率搜索，避免 karto 内部崩溃；
+- 2 cm 分辨率下细节更自然，适合作为正式巡航地图来源。
 
 当前 `slam_mapping.launch` 默认：
 
 ```text
-mapping_backend:=odom_laser
+mapping_backend:=slam_toolbox
 ```
 
 ---
@@ -41,13 +41,8 @@ mapping_backend:=odom_laser
 ```bash
 sudo apt install \
   ros-$ROS_DISTRO-slam-gmapping \
+  ros-$ROS_DISTRO-slam-toolbox \
   ros-$ROS_DISTRO-map-server
-```
-
-如果需要切换回 `slam_toolbox` 做对比，再额外安装：
-
-```bash
-sudo apt install ros-$ROS_DISTRO-slam-toolbox
 ```
 
 如果需要键盘手动控制：
@@ -74,7 +69,7 @@ roslaunch myrobot_navigation slam_mapping.launch
 2. 机器人模型和仿真驱动；
 3. `/scan` 激光雷达；
 4. `scan_self_filter.py` 输出 `/scan_filtered`；
-5. `odom_laser_mapper.py` 输出 `/map`；
+5. `slam_toolbox` 输出 `/map`；
 6. RViz 建图显示；
 7. 自动巡点节点；
 8. SLAM 状态监控和轨迹记录。
@@ -98,7 +93,7 @@ roslaunch myrobot_navigation slam_mapping.launch patrol_repeats:=1
 roslaunch myrobot_navigation slam_mapping.launch
 ```
 
-保留两个对比后端：
+保留两个对比/备用后端：
 
 ```bash
 roslaunch myrobot_navigation slam_mapping.launch mapping_backend:=odom_laser
@@ -109,11 +104,11 @@ roslaunch myrobot_navigation slam_mapping.launch mapping_backend:=gmapping
 
 | 后端 | 用途 |
 |---|---|
-| `odom_laser` | 规则比赛场地专用，固定边界与轴线投影，默认方案 |
-| `slam_toolbox` | 对比后端，用于图优化和回环建图 |
+| `slam_toolbox` | 默认方案，稳定优先，使用 /odom + /scan_filtered 建高分辨率图 |
+| `odom_laser` | 规则比赛场地专用备用方案，固定边界与轴线投影 |
 | `gmapping` | 传统 scan matching 对比基线 |
 
-`odom_laser` 由 `slam_mapping.launch` 直接配置；`slam_toolbox` 参数文件：
+`slam_toolbox` 参数文件：
 
 ```text
 myrobot_navigation/config/slam_toolbox_params.yaml

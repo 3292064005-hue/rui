@@ -19,7 +19,7 @@ navigation_control_frame: map
 navigation_separate_rotation: false
 navigation_rotation_rate: 20.0
 navigation_rotation_gain: 1.00
-navigation_rotation_max_speed: 0.65
+navigation_rotation_max_speed: 0.80
 navigation_rotation_min_speed: 0.08
 navigation_rotation_tolerance: 0.08
 navigation_rotation_timeout: 20.0
@@ -37,27 +37,24 @@ navigation_path_lateral_gain: 0.45
 navigation_path_max_lateral_speed_ratio: 0.12
 navigation_path_min_projected_speed: 0.05
 navigation_path_max_age: 2.0
-navigation_skip_reached_goal_distance: 0.22
+navigation_skip_reached_goal_distance: 0.10
 navigation_stop_duration: 0.20
 navigation_use_holonomic_path_follower: false
 navigation_use_plan_subgoals: false
-navigation_plan_subgoal_spacing: 0.60
-navigation_plan_subgoal_timeout: 45.0
-navigation_plan_subgoal_tolerance: 0.16
+navigation_plan_subgoal_spacing: 0.75
+navigation_plan_subgoal_timeout: 30.0
+navigation_plan_subgoal_tolerance: 0.08
 navigation_use_internal_route: false
-navigation_internal_goal_timeout: 45.0
-navigation_internal_route_tolerance: 0.08
-navigation_internal_route_strict: true
 # slam_mapping.launch overrides this to true so the same points can be driven
 # before a static map and move_base planning service exist.
 navigation_use_direct_path: false
 navigation_make_plan_service: /move_base/make_plan
 navigation_translation_rate: 20.0
-navigation_translation_tolerance: 0.04
-navigation_arrival_stable_cycles: 4
+navigation_translation_tolerance: 0.025
+navigation_arrival_stable_cycles: 5
 navigation_translation_gain: 3.40
-navigation_translation_max_forward_speed: 0.55
-navigation_translation_max_lateral_speed: 0.55
+navigation_translation_max_forward_speed: 0.65
+navigation_translation_max_lateral_speed: 0.65
 navigation_path_lookahead: 0.30
 navigation_replan_interval: 1.0
 navigation_stuck_timeout: 8.0
@@ -78,7 +75,7 @@ navigation_fast_direct_timeout: 10.0
 # Do not hard-code corner transition points here; move_base plans each leg from
 # the static map at runtime.
 navigation_goals:
-  - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.08}
+  - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.05}
   - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.1}
-  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.08}
-  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.18, fast_direct: true}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.05}
+  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.10}

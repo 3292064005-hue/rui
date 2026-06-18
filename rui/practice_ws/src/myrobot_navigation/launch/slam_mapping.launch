@@ -2,7 +2,7 @@
     <!--
       SLAM mapping launch file.
       Gazebo loads rm_map.world and builds /map from filtered laser scans and odometry.
-      Default backend is odom_laser. The default autonomous route is one lap.
+      Default backend is slam_toolbox. The default autonomous route is one lap.
     -->
     <arg name="launch_rviz" default="true" />
     <arg name="gui" default="true" />
@@ -10,7 +10,7 @@
     <arg name="autonomous_mapping" default="true" />
     <arg name="record_trajectory" default="true" />
     <arg name="enable_slam_monitor" default="true" />
-    <arg name="mapping_backend" default="odom_laser" />
+    <arg name="mapping_backend" default="slam_toolbox" />
     <arg name="patrol_repeats" default="1" />
 
     <arg name="params" default="$(find myrobot_task)/config/task_params.yaml" />
@@ -20,12 +20,12 @@
     <arg name="slam_toolbox_mode" default="sync" />
     <arg name="rviz_config" default="$(find myrobot_navigation)/config/slam.rviz" />
     <arg name="mapping_ignore_goal_hold" default="true" />
-    <arg name="mapping_translation_max_forward_speed" default="0.18" />
-    <arg name="mapping_translation_max_lateral_speed" default="0.14" />
+    <arg name="mapping_translation_max_forward_speed" default="0.12" />
+    <arg name="mapping_translation_max_lateral_speed" default="0.10" />
     <arg name="mapping_separate_rotation" default="true" />
-    <arg name="mapping_rotation_max_speed" default="0.28" />
-    <arg name="mapping_arrival_stable_cycles" default="3" />
-    <arg name="mapping_stop_duration" default="0.20" />
+    <arg name="mapping_rotation_max_speed" default="0.18" />
+    <arg name="mapping_arrival_stable_cycles" default="5" />
+    <arg name="mapping_stop_duration" default="0.35" />
 
     <arg name="scan_topic" default="/scan_filtered" />
     <arg name="raw_scan_topic" default="/scan" />
@@ -57,7 +57,7 @@
           output="screen">
         <param name="input_scan_topic" value="$(arg raw_scan_topic)" />
         <param name="output_scan_topic" value="$(arg scan_topic)" />
-        <param name="min_valid_range" value="0.20" />
+        <param name="min_valid_range" value="0.30" />
     </node>
 
     <node if="$(eval arg('mapping_backend') == 'slam_toolbox' and arg('slam_toolbox_mode') == 'sync')"
@@ -114,23 +114,23 @@
         <param name="hit_range_margin" value="0.03" />
         <param name="min_hit_count" value="3" />
         <param name="beam_step" value="1" />
-        <param name="min_insert_translation" value="0.035" />
-        <param name="min_insert_rotation" value="0.08" />
-        <param name="traversed_clearance_radius" value="0.08" />
-        <param name="min_component_cells" value="14" />
+        <param name="min_insert_translation" value="0.025" />
+        <param name="min_insert_rotation" value="0.05" />
+        <param name="traversed_clearance_radius" value="0.09" />
+        <param name="min_component_cells" value="12" />
         <param name="wall_thickness_cells" value="2" />
         <param name="max_gap_cells" value="7" />
         <param name="use_axis_line_filter" value="true" />
-        <param name="hough_threshold" value="16" />
+        <param name="hough_threshold" value="14" />
         <param name="hough_min_line_length" value="12" />
-        <param name="hough_max_line_gap" value="9" />
+        <param name="hough_max_line_gap" value="8" />
         <param name="axis_merge_tolerance_cells" value="5" />
-        <param name="axis_seed_gap_cells" value="5" />
-        <param name="axis_short_min_line_length" value="14" />
-        <param name="axis_short_min_pixels" value="12" />
+        <param name="axis_seed_gap_cells" value="4" />
+        <param name="axis_short_min_line_length" value="12" />
+        <param name="axis_short_min_pixels" value="10" />
         <param name="axis_short_max_thickness_cells" value="6" />
         <param name="axis_short_min_aspect" value="4.0" />
-        <param name="axis_short_gap_cells" value="4" />
+        <param name="axis_short_gap_cells" value="3" />
         <param name="axis_keep_short_segments" value="true" />
         <param name="axis_angle_tolerance" value="0.10" />
     </node>

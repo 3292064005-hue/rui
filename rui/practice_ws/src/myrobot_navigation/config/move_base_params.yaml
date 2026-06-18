@@ -15,7 +15,7 @@ shutdown_costmaps: false
 
 GlobalPlanner:
   allow_unknown: false
-  default_tolerance: 0.10
+  default_tolerance: 0.05
   use_dijkstra: true
   use_quadratic: true
   use_grid_path: false
@@ -23,5 +23,5 @@ GlobalPlanner:
   orientation_mode: 0
   lethal_cost: 253
   neutral_cost: 50
-  cost_factor: 2.6
+  cost_factor: 1.6
   publish_potential: false

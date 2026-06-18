@@ -1,13 +1,14 @@
 # Global planning should stay on the static map. Feeding live laser obstacle
 # points into the global map can temporarily seal narrow corridors and make
 # GlobalPlanner report NO PATH even when the static map has a valid route.
-footprint: [[0.10, 0.09], [0.10, -0.09], [-0.10, -0.09], [-0.10, 0.09]]
-footprint_padding: 0.00
+footprint: [[0.11, 0.10], [0.11, -0.10], [-0.11, -0.10], [-0.11, 0.10]]
+footprint_padding: 0.01
 
 transform_tolerance: 0.5
-# Keep a light buffer from walls without making narrow corridors look blocked.
-inflation_radius: 0.22
-cost_scaling_factor: 4.0
+# Give the global path more wall clearance so corner arcs are planned outside
+# the robot footprint, while still leaving the narrow patrol lanes connected.
+inflation_radius: 0.20
+cost_scaling_factor: 2.2
 
 plugins:
   - {name: static_layer, type: "costmap_2d::StaticLayer"}

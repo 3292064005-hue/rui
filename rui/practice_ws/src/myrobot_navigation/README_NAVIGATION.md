@@ -162,7 +162,7 @@ navigation_goals:
 不要把静态地图层直接放进 rolling local costmap；TEB 会把大量膨胀地图格当作点障碍，
 在起点或窄通道附近容易直接报 `trajectory is not feasible`。
 `navigation.launch` 中的 `scan_self_filter.py` 默认过滤 0.45m 以内的雷达点，避免车体/轮子自扫残留污染本地代价地图。
-正式巡航和建图巡航都保留必要的中间过渡点，减少单个目标过长导致的全局路径失败。
+正式巡航不保留手写过渡点；建图巡航单独使用覆盖路线，正式巡航每一段由 `move_base` 实时规划。
 
 ---
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Save nav_msgs/OccupancyGrid from /map as PGM + YAML.
+"""Save nav_msgs/OccupancyGrid from /map as PGM + PNG + YAML.
 
 This is a small replacement for calling map_server/map_saver manually. It keeps
 mapping handoff simple for the project: run slam_mapping.launch, wait until the
@@ -12,6 +12,8 @@ from __future__ import print_function
 import os
 import sys
 
+import cv2
+import numpy as np
 import rospy
 from nav_msgs.msg import OccupancyGrid
 
@@ -27,18 +29,31 @@ def map_cell_to_pgm(value):
     return 205
 
 
-def write_pgm(path, grid):
+def grid_to_image(grid):
     width = int(grid.info.width)
     height = int(grid.info.height)
     data = list(grid.data)
+    image = np.zeros((height, width), dtype=np.uint8)
+    # OccupancyGrid origin is bottom-left in map coordinates; image files are top row first.
+    for y in range(height):
+        row_start = y * width
+        image[height - 1 - y, :] = [
+            map_cell_to_pgm(data[row_start + x]) for x in range(width)
+        ]
+    return image
+
+
+def write_pgm(path, image):
+    height, width = image.shape
     with open(path, 'wb') as f:
         header = 'P5\n# CREATOR: myrobot_navigation save_slam_map.py\n%d %d\n255\n' % (width, height)
         f.write(header.encode('ascii'))
-        # OccupancyGrid origin is bottom-left in map coordinates; PGM is top row first.
-        for y in range(height - 1, -1, -1):
-            row_start = y * width
-            row = bytearray(map_cell_to_pgm(data[row_start + x]) for x in range(width))
-            f.write(row)
+        f.write(image.tobytes())
+
+
+def write_png(path, image):
+    if not cv2.imwrite(path, image):
+        raise IOError('failed to write PNG: %s' % path)
 
 
 def write_yaml(path, image_name, grid):
@@ -64,6 +79,7 @@ def main():
 
     os.makedirs(output_dir, exist_ok=True)
     pgm_path = os.path.join(output_dir, map_name + '.pgm')
+    png_path = os.path.join(output_dir, map_name + '.png')
     yaml_path = os.path.join(output_dir, map_name + '.yaml')
 
     rospy.loginfo('save_slam_map: waiting for OccupancyGrid on %s ...', map_topic)
@@ -77,12 +93,16 @@ def main():
         rospy.logerr('save_slam_map: received empty map, not saving')
         return 2
 
-    write_pgm(pgm_path, grid)
+    image = grid_to_image(grid)
+    write_pgm(pgm_path, image)
+    write_png(png_path, image)
     write_yaml(yaml_path, os.path.basename(pgm_path), grid)
     rospy.loginfo('save_slam_map: saved %s', pgm_path)
+    rospy.loginfo('save_slam_map: saved %s', png_path)
     rospy.loginfo('save_slam_map: saved %s', yaml_path)
     print('Saved SLAM map:')
     print('  %s' % pgm_path)
+    print('  %s' % png_path)
     print('  %s' % yaml_path)
     return 0
 

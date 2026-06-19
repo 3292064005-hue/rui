@@ -123,10 +123,10 @@ myrobot_navigation/config/navigation_params.yaml
 
 ```yaml
 navigation_goals:
-  - {name: zone_1, x: 0.52, y: -2.55, yaw:  0.0000, hold: 1.5}
-  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.1}
-  - {name: zone_2, x: 4.45, y: -1.65, yaw:  3.1416, hold: 1.5}
-  - {name: finish, x: 0.25, y: 0.00, yaw:  3.1416, hold: 0.1}
+  - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.12}
 ```
 
 正式巡航只配置任务语义目标，不显式写拐角过渡点。
@@ -142,6 +142,10 @@ navigation_goals:
 | `x`、`y` | 地图坐标，单位 m |
 | `yaw` | 目标朝向，单位 rad |
 | `hold` | 到达后停留时间，单位 s |
+| `rotate_at_goal` | 到点后单独转到目标朝向，识别区使用 |
+| `strict_xy_tolerance` | 为 true 时只使用该点的 `xy_tolerance`，不套用全局跳点距离 |
+| `xy_tolerance` | 该点到点判定半径，单位 m |
+| `pass_through` | 中转点到达容差内后直接切下一目标，不额外停车等待；正式巡航拐点不使用它 |
 
 正式巡航由 GlobalPlanner 和 TebLocalPlannerROS 规划路径、局部避障并直接发布 `/cmd_vel`。
 `cmd_vel_target_yaw_filter.py` 不再插入正式导航的速度指令链路，因此不会额外强制速度方向或车头朝向。
@@ -151,16 +155,22 @@ navigation_goals:
 
 当前 TEB 配置重点约束局部轨迹稳定性：
 
-- `max_global_plan_lookahead_dist: 1.20`，避免局部规划只看很短一段路；
-- `global_plan_viapoint_sep: 0.08`，`weight_viapoint: 90.0`，强制局部轨迹贴近全局路径；
-- `min_obstacle_dist: 0.08`，`inflation_dist: 0.30`，`weight_obstacle: 220.0`，`weight_inflation: 8.0`，保持离墙余量但不把狭窄通道判死；
-- `weight_optimaltime: 0.01`，降低为了抢时间而横向摆动的倾向；
+- `dt_ref: 0.20`，`controller_frequency: 20.0`，提高局部控制刷新和平滑度；
+- `max_vel_x/max_vel_y: 0.85`，`max_vel_theta: 1.20`，在不贴墙的前提下提高巡航速度；
+- `max_global_plan_lookahead_dist: 1.10`，避免局部规划提前把后续弯道纳入优化；
+- `global_plan_viapoint_sep: 0.40`，`weight_viapoint: 20.0`，让 TEB 平滑全局中心线，不追逐 U 弯栅格台阶；
+- `min_obstacle_dist: 0.14`，`inflation_dist: 0.32`，全局墙体膨胀半径保持 `0.20m`；
+- `free_goal_vel: false`，要求巡航点到点停稳，再由导航器执行转向；
+- `weight_optimaltime: 0.05`，保持直线和中长段速度；
+- `min_turning_radius: 0.0`，`weight_kinematics_turning_radius: 0.0`，到点转弯模式下不再让 TEB 边走边硬凑大半径弧线；
+- `xy_goal_tolerance: 0.12`，放宽到点判定，避免巡航点前后磨蹭；
 - `yaw_goal_tolerance: 3.14`，避免 TEB 在终点强制处理车头朝向。
 
-本地代价地图由 `myrobot_navigation/config/local_costmap_common_params.yaml` 配置，只使用过滤后的激光障碍层做短距离避障。
+本地代价地图由 `myrobot_navigation/config/local_costmap_common_params.yaml` 配置，只使用过滤后的激光做短距离清除。
 静态地图墙体留在全局代价地图中，TEB 通过高权重 via-points 贴合全局路径。
 不要把静态地图层直接放进 rolling local costmap；TEB 会把大量膨胀地图格当作点障碍，
 在起点或窄通道附近容易直接报 `trajectory is not feasible`。
+正式巡航也不把稀疏激光墙点直接喂给 TEB；窄通道里左右墙点会把局部轨迹拉成回环。
 `navigation.launch` 中的 `scan_self_filter.py` 默认过滤 0.45m 以内的雷达点，避免车体/轮子自扫残留污染本地代价地图。
 正式巡航不保留手写过渡点；建图巡航单独使用覆盖路线，正式巡航每一段由 `move_base` 实时规划。
 

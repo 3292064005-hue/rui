@@ -290,6 +290,9 @@ class MoveBaseWaypointNavigator(object):
             return 0.0
         return max(0.0, float(item.get('hold', self.default_hold)))
 
+    def _is_pass_through_goal(self, item):
+        return bool(item.get('pass_through', False))
+
     def _should_rotate_at_goal(self, item):
         return (
             self.separate_rotation or
@@ -513,7 +516,8 @@ class MoveBaseWaypointNavigator(object):
                 result_text = self.client.get_goal_status_text()
                 return state == GoalStatus.SUCCEEDED, state, result_text
             if self._already_at_goal_xy(item):
-                self._stop_robot()
+                if not self._is_pass_through_goal(item):
+                    self._stop_robot()
                 return (
                     True,
                     GoalStatus.SUCCEEDED,
@@ -900,7 +904,8 @@ class MoveBaseWaypointNavigator(object):
                 rospy.loginfo(
                     'move_base_waypoint_navigator: %s already within xy tolerance; skipping move_base goal',
                     item['name'])
-                self._stop_and_settle()
+                if not self._is_pass_through_goal(item):
+                    self._stop_and_settle()
                 if self._should_rotate_at_goal(item) and not self._rotate_to_yaw(item, index, attempt):
                     if rospy.is_shutdown():
                         return False
@@ -941,7 +946,8 @@ class MoveBaseWaypointNavigator(object):
                     if hold > 0.0:
                         rospy.sleep(hold)
             if failed_subgoal is None:
-                self._stop_and_settle()
+                if not self._is_pass_through_goal(item):
+                    self._stop_and_settle()
                 if self._should_rotate_at_goal(item) and not self._rotate_to_yaw(item, index, attempt):
                     if rospy.is_shutdown():
                         return False

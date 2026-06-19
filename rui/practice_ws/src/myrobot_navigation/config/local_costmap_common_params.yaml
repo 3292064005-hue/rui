@@ -1,13 +1,15 @@
-# Keep the local map lightweight. Static walls are handled by the global map;
-# runtime global-plan subgoals keep TEB from cutting across corners.
+# Keep the local map lightweight. Static walls are handled by the global map.
+# Filtered laser points only clear transient speckles; TEB does not consume
+# local costmap obstacles during formal patrol because sparse wall returns make
+# it overreact and generate loops in narrow corridors.
 footprint: [[0.11, 0.10], [0.11, -0.10], [-0.11, -0.10], [-0.11, 0.10]]
 footprint_padding: 0.01
 
-obstacle_range: 2.8
-raytrace_range: 3.2
+obstacle_range: 0.85
+raytrace_range: 1.3
 transform_tolerance: 0.5
 
-inflation_radius: 0.20
+inflation_radius: 0.21
 cost_scaling_factor: 2.8
 
 plugins:

@@ -109,8 +109,10 @@ myrobot_task/config/task_params.yaml
 ### 5.1 巡点参数
 
 正式 `task_patrol.launch` 使用
-`myrobot_navigation/config/navigation_params.yaml` 中的 3 个正式导航点，
-对应完整路线中的第 3、6、13 个点：`zone_1`、`right_wall_exit`、`finish`。
+`myrobot_navigation/config/navigation_params.yaml` 中的 4 个正式导航点：
+`zone_1`、`right_wall_exit`、`zone_2`、`finish`。
+其中 `right_wall_exit` 是 `pass_through` 中转点，到达容差内后直接切下一目标；
+`zone_1` 和 `zone_2` 是识别点，会到点停车、转向并停留。
 建图巡航路线单独维护在
 `myrobot_navigation/config/slam_navigation_params.yaml`。
 
@@ -125,6 +127,8 @@ myrobot_task/config/task_params.yaml
 | `x`、`y` | Gazebo 世界坐标，单位 m |
 | `yaw` | 机器人目标朝向，单位 rad |
 | `hold` | 到达后停留时间，单位 s |
+| `pass_through` | 中转点到达容差内后直接切下一目标 |
+| `xy_tolerance` | 该点到点判定半径，单位 m |
 
 ### 5.2 识别区参数
 

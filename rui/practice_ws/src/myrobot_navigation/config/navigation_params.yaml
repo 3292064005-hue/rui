@@ -7,7 +7,7 @@ navigation_target_yaw_topic: /navigation_target_yaw
 navigation_goal_frame: map
 navigation_goal_timeout: 180.0
 navigation_server_timeout: 30.0
-navigation_startup_stabilization_delay: 2.0
+navigation_startup_stabilization_delay: 1.2
 navigation_retry_count: 1
 navigation_clear_costmaps_on_retry: true
 navigation_stop_on_failure: false
@@ -18,10 +18,10 @@ navigation_base_frame: base_footprint
 navigation_control_frame: map
 navigation_separate_rotation: false
 navigation_rotation_rate: 20.0
-navigation_rotation_gain: 1.00
-navigation_rotation_max_speed: 0.80
-navigation_rotation_min_speed: 0.08
-navigation_rotation_tolerance: 0.08
+navigation_rotation_gain: 2.60
+navigation_rotation_max_speed: 1.30
+navigation_rotation_min_speed: 0.12
+navigation_rotation_tolerance: 0.10
 navigation_rotation_timeout: 20.0
 navigation_teb_angular_keep_ratio: 0.35
 navigation_teb_angular_blend_error: 0.45
@@ -38,7 +38,7 @@ navigation_path_max_lateral_speed_ratio: 0.12
 navigation_path_min_projected_speed: 0.05
 navigation_path_max_age: 2.0
 navigation_skip_reached_goal_distance: 0.10
-navigation_stop_duration: 0.20
+navigation_stop_duration: 0.12
 navigation_use_holonomic_path_follower: false
 navigation_use_plan_subgoals: false
 navigation_plan_subgoal_spacing: 0.75
@@ -75,7 +75,7 @@ navigation_fast_direct_timeout: 10.0
 # Do not hard-code corner transition points here; move_base plans each leg from
 # the static map at runtime.
 navigation_goals:
-  - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.05}
-  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.1}
-  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.05}
-  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.10}
+  - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
+  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.12}

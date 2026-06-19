@@ -59,10 +59,11 @@ def write_png(path, image):
 def write_yaml(path, image_name, grid):
     origin = grid.info.origin
     q = origin.orientation
+    resolution = round(float(grid.info.resolution), 6)
     # For this 2D map the origin yaw is normally zero. Preserve full quaternion in a comment for traceability.
     with open(path, 'w') as f:
         f.write('image: %s\n' % image_name)
-        f.write('resolution: %.10f\n' % grid.info.resolution)
+        f.write('resolution: %.10f\n' % resolution)
         f.write('origin: [%.10f, %.10f, 0.0]\n' % (origin.position.x, origin.position.y))
         f.write('negate: 0\n')
         f.write('occupied_thresh: 0.65\n')

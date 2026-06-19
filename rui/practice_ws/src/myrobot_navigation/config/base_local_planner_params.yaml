@@ -3,16 +3,16 @@ TebLocalPlannerROS:
   map_frame: map
 
   teb_autosize: true
-  dt_ref: 0.22
+  dt_ref: 0.20
   dt_hysteresis: 0.05
-  min_samples: 12
+  min_samples: 13
   max_samples: 120
   global_plan_overwrite_orientation: true
   allow_init_with_backwards_motion: false
-  max_global_plan_lookahead_dist: 1.20
-  global_plan_viapoint_sep: 0.35
+  max_global_plan_lookahead_dist: 1.10
+  global_plan_viapoint_sep: 0.40
   via_points_ordered: true
-  global_plan_prune_distance: 0.30
+  global_plan_prune_distance: 0.18
   exact_arc_length: false
   force_reinit_new_goal_dist: 1.2
   force_reinit_new_goal_angular: 1.2
@@ -23,13 +23,13 @@ TebLocalPlannerROS:
 
   # Holonomic base: keep x/y speed limits symmetric and let TEB own the full
   # command, including angular.z.
-  max_vel_x: 0.42
-  max_vel_x_backwards: 0.36
-  max_vel_y: 0.42
-  max_vel_theta: 0.80
-  acc_lim_x: 1.25
-  acc_lim_y: 1.25
-  acc_lim_theta: 1.5
+  max_vel_x: 0.85
+  max_vel_x_backwards: 0.60
+  max_vel_y: 0.85
+  max_vel_theta: 1.20
+  acc_lim_x: 2.80
+  acc_lim_y: 2.80
+  acc_lim_theta: 2.2
   min_turning_radius: 0.0
   wheelbase: 0.0
   cmd_angle_instead_rotvel: false
@@ -39,24 +39,24 @@ TebLocalPlannerROS:
     type: "polygon"
     vertices: [[0.11, 0.10], [0.11, -0.10], [-0.11, -0.10], [-0.11, 0.10]]
 
-  xy_goal_tolerance: 0.05
+  xy_goal_tolerance: 0.12
   # Keep TEB focused on xy so final waypoint yaw cannot block the patrol lap.
   yaw_goal_tolerance: 3.14
   free_goal_vel: false
   complete_global_plan: true
 
-  min_obstacle_dist: 0.10
-  inflation_dist: 0.25
+  min_obstacle_dist: 0.14
+  inflation_dist: 0.32
   dynamic_obstacle_inflation_dist: 0.18
-  # Static-map clearance is owned by the global planner. Moderate via-points
-  # keep TEB on the route while allowing it to smooth grid-cell jaggedness.
+  # Static-map clearance is owned by the global planner. Do not feed sparse
+  # laser wall points directly into TEB; in narrow corridors they create loops.
   include_costmap_obstacles: false
   include_dynamic_obstacles: false
-  costmap_obstacles_behind_robot_dist: 0.10
-  obstacle_poses_affected: 16
+  costmap_obstacles_behind_robot_dist: 0.05
+  obstacle_poses_affected: 8
   legacy_obstacle_association: false
-  obstacle_association_force_inclusion_factor: 2.0
-  obstacle_association_cutoff_factor: 8.0
+  obstacle_association_force_inclusion_factor: 1.2
+  obstacle_association_cutoff_factor: 2.4
   costmap_converter_plugin: ""
   costmap_converter_spin_thread: true
   costmap_converter_rate: 5.0
@@ -70,19 +70,19 @@ TebLocalPlannerROS:
   weight_max_vel_x: 2.0
   weight_max_vel_y: 2.0
   weight_max_vel_theta: 1.0
-  weight_acc_lim_x: 2.0
-  weight_acc_lim_y: 2.0
-  weight_acc_lim_theta: 1.0
+  weight_acc_lim_x: 1.6
+  weight_acc_lim_y: 1.6
+  weight_acc_lim_theta: 0.9
   weight_kinematics_nh: 0.1
   weight_kinematics_forward_drive: 0.0
   weight_kinematics_turning_radius: 0.0
-  weight_optimaltime: 0.01
-  weight_shortest_path: 0.85
-  weight_obstacle: 80.0
-  weight_inflation: 10.0
+  weight_optimaltime: 0.05
+  weight_shortest_path: 0.65
+  weight_obstacle: 40.0
+  weight_inflation: 4.0
   weight_dynamic_obstacle: 10.0
   weight_dynamic_obstacle_inflation: 0.2
-  weight_viapoint: 22.0
+  weight_viapoint: 20.0
   weight_prefer_rotdir: 0.0
   weight_adapt_factor: 2.0
 

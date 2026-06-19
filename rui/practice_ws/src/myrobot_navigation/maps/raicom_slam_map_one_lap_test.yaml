@@ -1,5 +1,5 @@
 image: raicom_slam_map_one_lap_test.pgm
-resolution: 0.0199999996
+resolution: 0.0200000000
 origin: [-0.2886546760, -3.7904344596, 0.0]
 negate: 0
 occupied_thresh: 0.65

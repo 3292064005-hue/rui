@@ -1,6 +1,6 @@
 # The wheel/link geometry is roughly 0.21 m x 0.20 m. Keep enough margin for
 # cornering so the local planner does not skim walls.
-footprint: [[0.12, 0.105], [0.12, -0.105], [-0.12, -0.105], [-0.12, 0.105]]
+footprint: [[0.115, 0.105], [0.115, -0.105], [-0.115, -0.105], [-0.115, 0.105]]
 footprint_padding: 0.01
 
 obstacle_range: 2.8

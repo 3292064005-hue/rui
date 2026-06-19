@@ -2,7 +2,7 @@
 # Filtered laser points only clear transient speckles; TEB does not consume
 # local costmap obstacles during formal patrol because sparse wall returns make
 # it overreact and generate loops in narrow corridors.
-footprint: [[0.11, 0.10], [0.11, -0.10], [-0.11, -0.10], [-0.11, 0.10]]
+footprint: [[0.115, 0.105], [0.115, -0.105], [-0.115, -0.105], [-0.115, 0.105]]
 footprint_padding: 0.01
 
 obstacle_range: 0.85

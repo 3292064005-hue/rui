@@ -7,7 +7,7 @@ footprint_padding: 0.01
 transform_tolerance: 0.5
 # Give the global path more wall clearance so corner arcs are planned outside
 # the robot footprint, while still leaving the narrow patrol lanes connected.
-inflation_radius: 0.21
+inflation_radius: 0.19
 cost_scaling_factor: 1.6
 
 plugins:

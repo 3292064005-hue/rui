@@ -70,12 +70,21 @@ navigation_fast_direct_yaw_tolerance: 0.10
 navigation_fast_direct_locked_yaw: 3.1416
 navigation_fast_direct_center_y: 0.00
 navigation_fast_direct_timeout: 10.0
+navigation_internal_goal_timeout: 45.0
+navigation_internal_route_tolerance: 0.12
+navigation_internal_route_strict: true
 
-# Formal patrol goals. Visit both recognition zones before returning to finish.
-# Do not hard-code corner transition points here; move_base plans each leg from
-# the static map at runtime.
+# Formal patrol goals. Only real recognition / finish points should be here.
 navigation_goals:
   - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: right_wall_exit, x: 2.70, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.20}
-  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: finish, x: 0.00, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.12}
+  - {name: right_wall_exit, x: 2.70, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.20}
+  - {name: zone_2, x: 4.45, y: -1.58, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.08}
+  - {name: finish, x: 0.30, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.10}
+
+# Transition points before each formal goal.
+# Points under "zone_1" are driven before reaching zone_1.
+# Points under "zone_2" are driven before reaching zone_2.
+# Points under "finish" are driven before reaching finish.
+navigation_internal_route:
+  zone_1:
+    - {name: start_to_zone1_mid, x: 0.26, y: -3.80, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: true, xy_tolerance: 0.08}

@@ -127,7 +127,7 @@ class MoveBaseWaypointNavigator(object):
         self.use_plan_subgoals = bool(
             rospy.get_param('~navigation_use_plan_subgoals', False))
         self.use_internal_route = bool(
-            rospy.get_param('~navigation_use_internal_route', False))
+            rospy.get_param('~navigation_use_internal_route', True))
         self.internal_goal_timeout = float(
             rospy.get_param('~navigation_internal_goal_timeout', 45.0))
         self.internal_route_tolerance = float(

@@ -42,7 +42,7 @@ TebLocalPlannerROS:
   xy_goal_tolerance: 0.12
   # Keep TEB focused on xy so final waypoint yaw cannot block the patrol lap.
   yaw_goal_tolerance: 3.14
-  free_goal_vel: false
+  free_goal_vel: true
   complete_global_plan: true
 
   min_obstacle_dist: 0.14
@@ -76,7 +76,7 @@ TebLocalPlannerROS:
   weight_kinematics_nh: 0.1
   weight_kinematics_forward_drive: 0.0
   weight_kinematics_turning_radius: 0.0
-  weight_optimaltime: 0.05
+  weight_optimaltime: 0.01
   weight_shortest_path: 0.65
   weight_obstacle: 40.0
   weight_inflation: 4.0

@@ -44,7 +44,7 @@ navigation_use_plan_subgoals: false
 navigation_plan_subgoal_spacing: 0.75
 navigation_plan_subgoal_timeout: 30.0
 navigation_plan_subgoal_tolerance: 0.08
-navigation_use_internal_route: false
+navigation_use_internal_route: true
 # slam_mapping.launch overrides this to true so the same points can be driven
 # before a static map and move_base planning service exist.
 navigation_use_direct_path: false
@@ -77,9 +77,9 @@ navigation_internal_route_strict: true
 # Formal patrol goals. Only real recognition / finish points should be here.
 navigation_goals:
   - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: right_wall_exit, x: 2.70, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.20}
+  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
   - {name: zone_2, x: 4.45, y: -1.58, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.08}
-  - {name: finish, x: 0.30, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.10}
+  - {name: finish, x: 0.40, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.05}
 
 # Transition points before each formal goal.
 # Points under "zone_1" are driven before reaching zone_1.
@@ -87,4 +87,10 @@ navigation_goals:
 # Points under "finish" are driven before reaching finish.
 navigation_internal_route:
   zone_1:
-    - {name: start_to_zone1_mid, x: 0.26, y: -3.80, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: true, xy_tolerance: 0.08}
+    - {name: start_to_zone1_mid, x: 0.30, y: -3.55, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
+  right_wall_exit:
+    - {name: zone1_to_zone2_mid, x: 3.02, y: -0.58, yaw: -0.8, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
+  zone_2:
+    - {name: start_to_zon_mid, x: 2.0, y: -2.0, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.08}
+    - {name: start_to_z_mid, x: 2.0, y: -3.50, yaw: 0.0, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
+    - {name: z_mid_to_mid, x: 4.45, y: -3.50, yaw: 0.0, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}

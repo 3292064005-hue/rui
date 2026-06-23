@@ -87,7 +87,7 @@ navigation_goals:
 # Points under "finish" are driven before reaching finish.
 navigation_internal_route:
   zone_1:
-    - {name: start_to_zone1_mid, x: 0.30, y: -3.55, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
+    - {name: start_to_zone1_mid, x: 0.30, y: -3.55, yaw: -1.5708, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.08}
   right_wall_exit:
     - {name: zone1_to_zone2_mid, x: 3.02, y: -0.58, yaw: -0.8, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
   zone_2:

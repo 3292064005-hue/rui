@@ -42,6 +42,7 @@ sudo apt install \
   ros-$ROS_DISTRO-amcl \
   ros-$ROS_DISTRO-move-base \
   ros-$ROS_DISTRO-navigation \
+  ros-$ROS_DISTRO-teb-local-planner \
   ros-$ROS_DISTRO-gazebo-plugins
 ```
 
@@ -50,7 +51,7 @@ sudo apt install \
 ## 3. 启动导航栈，手动给目标
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -189,7 +190,7 @@ roslaunch myrobot_navigation save_slam_map.launch
 
 ```bash
 roslaunch myrobot_navigation autonomous_navigation.launch \
-  map_file:=$HOME/myrobot_navigation_maps/raicom_slam_map.yaml
+  map_file:=$(find myrobot_navigation)/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 如果定位偏差较大，在 RViz 中重新点击 `2D Pose Estimate`。

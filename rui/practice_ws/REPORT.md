@@ -252,7 +252,7 @@ rostopic echo /recognition_summary
 ## 11. 演示命令
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash

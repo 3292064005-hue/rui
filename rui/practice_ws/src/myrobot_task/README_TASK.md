@@ -21,7 +21,7 @@
 ## 2. 运行方式
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash

@@ -31,7 +31,7 @@ practice_ws/
 如果宿主机无法安装 ROS1 Noetic，推荐使用外层工作区的 Docker 环境：
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws
+cd <ros1_ultrasound_ws>
 bash docker/build_noetic.sh
 bash docker/run_noetic.sh
 ```
@@ -58,7 +58,9 @@ sudo apt install \
   ros-$ROS_DISTRO-amcl \
   ros-$ROS_DISTRO-move-base \
   ros-$ROS_DISTRO-navigation \
+  ros-$ROS_DISTRO-teb-local-planner \
   ros-$ROS_DISTRO-slam-gmapping \
+  ros-$ROS_DISTRO-slam-toolbox \
   ros-$ROS_DISTRO-cv-bridge \
   python3-opencv \
   python3-numpy
@@ -69,7 +71,7 @@ sudo apt install \
 ## 3. 编译
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -78,7 +80,7 @@ source devel/setup.bash
 如果重新打开终端，仍需执行：
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 source devel/setup.bash
 ```
@@ -95,7 +97,7 @@ source devel/setup.bash
 | 正式任务入口（推荐） | `roslaunch myrobot_task task_patrol.launch` |
 | SLAM 建图 | `roslaunch myrobot_navigation slam_mapping.launch` |
 | 保存 SLAM 地图 | `roslaunch myrobot_navigation save_slam_map.launch` |
-| 启动导航栈，手动点目标 | `roslaunch myrobot_navigation navigation.launch` |
+| 启动导航栈与仿真（手动点目标） | `roslaunch myrobot_navigation navigation.launch` |
 | 自主导航+识别+记录 | `roslaunch myrobot_navigation autonomous_navigation.launch` |
 | 旧版简单巡点（兼容） | `roslaunch myrobot_task task_patrol_simple.launch` |
 
@@ -135,16 +137,16 @@ rostopic echo /simulation_health
 roslaunch myrobot_navigation slam_mapping.launch
 ```
 
-建图完成后保存：
+建图完成后，在 `slam_mapping.launch` 仍在运行时另开终端保存：
 
 ```bash
 roslaunch myrobot_navigation save_slam_map.launch
 ```
 
-### 第四步：运行自主导航
+### 第四步：运行自主导航任务
 
 ```bash
-roslaunch myrobot_navigation autonomous_navigation.launch
+roslaunch myrobot_task task_patrol.launch
 ```
 
 查看状态：
@@ -155,6 +157,12 @@ rostopic echo /navigation_health
 rostopic echo /move_base/status
 rostopic echo /recognition_result
 rostopic echo /recognition_summary
+```
+
+如需单独测试导航栈（不启动识别与记录）：
+
+```bash
+roslaunch myrobot_navigation navigation.launch
 ```
 
 ### 第五步：查看任务结果
@@ -230,4 +238,6 @@ rosrun my_teleop_keyboard teleop_node.py
 3. `src/myrobot_navigation/README_SLAM.md`：建图流程；
 4. `src/myrobot_navigation/README_NAVIGATION.md`：自主导航流程；
 5. `src/myrobot_task/README_TASK.md`：任务演示和结果记录；
-6. `REPORT.md`：比赛技术报告、算法说明与验收数据。
+6. `src/myrobot_recognition/README.md`：图像识别节点说明；
+7. `REPORT.md`：比赛技术报告、算法说明与验收数据；
+8. `src/myrobot_description/ACCEPTANCE_CHECKLIST.md`：验收清单。

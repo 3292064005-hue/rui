@@ -56,7 +56,7 @@ sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
 ## 3. 一键自动建图
 
 ```bash
-cd /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws
+cd practice_ws
 source /opt/ros/noetic/setup.bash
 catkin_make
 source devel/setup.bash
@@ -133,8 +133,9 @@ roslaunch myrobot_navigation slam_mapping.launch autonomous_mapping:=false
 另开终端：
 
 ```bash
+cd practice_ws
 source /opt/ros/noetic/setup.bash
-source /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws/devel/setup.bash
+source devel/setup.bash
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
@@ -153,16 +154,17 @@ angular.z  旋转
 当 RViz 中 `/map` 基本完整后，另开终端执行：
 
 ```bash
+cd practice_ws
 source /opt/ros/noetic/setup.bash
-source /home/chen/ros1_ultrasound_ws/rui/rui/practice_ws/devel/setup.bash
+source devel/setup.bash
 roslaunch myrobot_navigation save_slam_map.launch
 ```
 
-默认保存到：
+默认保存到功能包 `maps/` 目录：
 
 ```text
-~/myrobot_navigation_maps/raicom_slam_map.pgm
-~/myrobot_navigation_maps/raicom_slam_map.yaml
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 指定保存目录和名称：

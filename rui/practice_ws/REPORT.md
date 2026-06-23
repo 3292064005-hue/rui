@@ -4,16 +4,16 @@
 
 本项目面向 RAICOM 智能侦察仿真任务，基于 Ubuntu、ROS1 Noetic、
 Gazebo Classic 和 Python 实现四轮麦克纳姆机器人仿真系统。系统包含
-自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、`odom_laser`
-轴线建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
+自定义 URDF/Xacro 机器人、全向底盘控制、激光与视觉传感器、
+`slam_toolbox` 建图、AMCL 定位、move_base 自主导航、多点巡检、YOLO ONNX
 敌军/友军/人质识别以及任务证据记录。
 
-机器人正式巡检按照 `navigation_params.yaml` 中的 `start`、`zone_1`、
-`zone_2`、`finish` 4 个目标点执行；建图阶段使用
+机器人正式巡检按照 `navigation_params.yaml` 中的 `zone_1`、
+`right_wall_exit`、`zone_2`、`finish` 4 个目标点执行；建图阶段使用
 `slam_navigation_params.yaml` 中的 12 个覆盖点完成场地扫描。当前默认
-SLAM 后端为 `odom_laser`，使用 `/scan_filtered`、
-`/odom` 和 TF 做轴线投影与固定边界建图。仓库保留的最终导航地图分辨率约 0.02m，地图尺寸为 263 × 206，
-原点约为 (-0.488, -3.815)。
+SLAM 后端为 `slam_toolbox`，使用 `/scan_filtered`、
+`/odom` 和 TF 做稳定高分辨率建图。仓库保留的导航地图分辨率约 0.02m，地图尺寸为 254 × 204，
+原点约为 (-0.289, -3.790)。
 
 ## 1. 任务理解
 
@@ -38,7 +38,7 @@ Gazebo 世界与机器人模型
   ├─ /imu/data
   └─ /joint_states
         ↓
-建图：odom_laser_mapper -> /map
+建图：slam_toolbox -> /map（默认）；odom_laser_mapper -> /map（备用）
 导航：map_server + AMCL + move_base
 巡检：move_base_waypoint_navigator
 识别：battlefield_recognition
@@ -52,7 +52,8 @@ Gazebo 世界与机器人模型
 | 机器人模型 | `myrobot_description/urdf/turtlebot3_mecanum.urdf.xacro` |
 | Gazebo 场景 | `myrobot_description/worlds/rm_map.world` |
 | 麦克纳姆仿真接口 | `myrobot_simulation/scripts/mecanum_sim_driver.py` |
-| 建图 | `myrobot_navigation/scripts/odom_laser_mapper.py` |
+| 默认建图 | `slam_toolbox`（ROS 包） |
+| 备用建图 | `myrobot_navigation/scripts/odom_laser_mapper.py` |
 | 导航巡点 | `myrobot_navigation/scripts/move_base_waypoint_navigator.py` |
 | 图像识别 | `myrobot_recognition/scripts/battlefield_recognition.py` |
 | 证据记录 | `myrobot_task/scripts/task_evidence_recorder.py` |
@@ -77,7 +78,7 @@ wz：原地旋转角速度
 ```
 
 其中 `r` 为轮半径，`L`、`W` 分别为半轴距和半轮距。正式巡航由
-`move_base` 调用 GlobalPlanner 和 DWAPlannerROS 闭环求解速度，允许横移与转向
+`move_base` 调用 GlobalPlanner 和 TebLocalPlannerROS 闭环求解速度，允许横移与转向
 同时发生；建图阶段仍可使用低速直控巡航来积累观测。
 
 ## 4. SLAM 建图
@@ -86,18 +87,18 @@ wz：原地旋转角速度
 
 传统 gmapping 在本场地的长直、重复走廊中可能产生错误 scan matching
 修正，表现为地图旋转、重影、假闭环和画布异常膨胀。项目现在默认采用
-`odom_laser`，结合里程计、过滤激光、固定场地边界和轴线投影生成稳定栅格图。
+`odom_laser`（备用后端），结合里程计、过滤激光、固定场地边界和轴线投影生成稳定栅格图。
 
 ### 4.2 建图算法
 
-`odom_laser` 使用 `/odom`、TF 和 `/scan_filtered` 激光建立 2D 栅格图：
+`odom_laser`（备用后端）使用 `/odom`、TF 和 `/scan_filtered` 激光建立 2D 栅格图：
 
 1. 自动建图巡航在 `odom` 坐标系下低速直控走完覆盖点；
 2. `scan_self_filter.py` 生成 `/scan_filtered`，去掉车体近场回波；
 3. `odom_laser_mapper.py` 按里程计位姿把激光命中写入 0.02m 栅格；
 4. 根据规则场地的水平/垂直边界做轴线过滤、合并和补线；
 5. 发布 `/map`，供 RViz 查看并由 `save_slam_map.launch` 保存；
-6. `slam_toolbox` 与 `gmapping` 保留为对比后端。
+6. `slam_toolbox`（默认）与 `gmapping` 保留为对比后端。
 
 仿真专用固定边界 mapper 和传统 gmapping 仍可作为对照：
 
@@ -110,30 +111,30 @@ roslaunch myrobot_navigation slam_mapping.launch mapping_backend:=gmapping
 
 | 指标 | 结果 |
 |---|---:|
-| 默认后端 | odom_laser |
-| 地图尺寸 | 263 × 206 |
+| 默认后端 | slam_toolbox |
+| 地图尺寸 | 254 × 204 |
 | 分辨率 | 约 0.02m |
-| 原点 | 约 (-0.488, -3.815) |
+| 原点 | 约 (-0.289, -3.790) |
 | 建图单圈目标 | 12 |
 | 正式巡航目标 | 4 |
 | 默认建图巡航 | 1 圈 |
 | 回环优化 | 对比后端可用，默认不依赖 |
-| 导航地图 | `raicom_slam_map_final.yaml` |
+| 导航地图 | `raicom_slam_map_one_lap_test.yaml` |
 
 最终地图：
 
 ```text
-src/myrobot_navigation/maps/raicom_slam_map_final.pgm
-src/myrobot_navigation/maps/raicom_slam_map_final.yaml
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
-![最终 SLAM 地图](src/myrobot_navigation/maps/raicom_slam_map_final.png)
+![最终 SLAM 地图](src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.png)
 
 ## 5. 自主导航与巡检
 
 导航链路由 `map_server + AMCL + move_base` 构成。正式目标点保存在
 `config/navigation_params.yaml`。自定义巡点节点只负责按顺序发送
-`move_base` action goal，路径和速度由 GlobalPlanner 与 DWAPlannerROS
+`move_base` action goal，路径和速度由 GlobalPlanner 与 TebLocalPlannerROS
 共同求解，平移和转向可以同时发生。
 
 该策略具有以下特点：
@@ -236,8 +237,8 @@ rostopic echo /recognition_summary
 
 ## 9. 创新点
 
-1. 将默认建图切换为 `odom_laser` 轴线建图，适配规则仿真场地并降低地图重影；
-2. 麦克纳姆正式巡航采用 DWA 全向局部规划，平移与转向联合优化；
+1. 将默认建图切换为 `slam_toolbox` 稳定建图，适配仿真场地并降低地图重影；
+2. 麦克纳姆正式巡航采用 TEB 全向局部规划，平移与转向联合优化；
 3. YOLO 整帧与重叠分块推理兼顾单目标和宽画面多目标；
 4. 建图、导航、识别和证据日志形成完整可追溯任务链。
 

@@ -111,13 +111,14 @@ myrobot_task/config/task_params.yaml
 正式 `task_patrol.launch` 使用
 `myrobot_navigation/config/navigation_params.yaml` 中的 4 个正式导航点：
 `zone_1`、`right_wall_exit`、`zone_2`、`finish`。
-其中 `right_wall_exit` 是 `pass_through` 中转点，到达容差内后直接切下一目标；
+其中 `right_wall_exit` 是过渡点；
 `zone_1` 和 `zone_2` 是识别点，会到点停车、转向并停留。
 建图巡航路线单独维护在
 `myrobot_navigation/config/slam_navigation_params.yaml`。
 
 `myrobot_task/config/task_params.yaml` 中的 `waypoints` 只供
-`task_patrol_simple.launch` 兼容使用。
+`task_patrol_simple.launch` 兼容使用。正式导航目标点位于
+`myrobot_navigation/config/navigation_params.yaml`。
 
 字段说明：
 
@@ -141,6 +142,13 @@ zones:
     enemy: 1
     friendly: 1
     hostage: 0
+  - name: zone_2
+    center_x: 4.45
+    center_y: -1.65
+    radius: 0.35
+    enemy: 2
+    friendly: 0
+    hostage: 1
 ```
 
 机器人进入识别区半径范围后，会在停留时间内抓取相机画面，并输出对应识别结果。

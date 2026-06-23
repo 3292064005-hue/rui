@@ -25,8 +25,8 @@ move_base_waypoint_navigator.py 顺序发送目标点
 默认导航地图为最终 SLAM 扫描结果：
 
 ```text
-myrobot_navigation/maps/raicom_slam_map_final.pgm
-myrobot_navigation/maps/raicom_slam_map_final.yaml
+myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 该地图用于 `map_server`。Gazebo 世界中的识别面板仅参与视觉渲染，
@@ -124,9 +124,9 @@ myrobot_navigation/config/navigation_params.yaml
 ```yaml
 navigation_goals:
   - {name: zone_1, x: 0.52, y: -2.55, yaw: 0.0000, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: zone_2, x: 4.45, y: -1.65, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.12}
-  - {name: finish, x: 0.25, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.12}
+  - {name: right_wall_exit, x: 3.00, y: -2.00, yaw: -3.1416, hold: 0.0, rotate_at_goal: false, strict_xy_tolerance: false, xy_tolerance: 0.10}
+  - {name: zone_2, x: 4.45, y: -1.58, yaw: 3.1416, hold: 1.5, rotate_at_goal: true, strict_xy_tolerance: true, xy_tolerance: 0.08}
+  - {name: finish, x: 0.40, y: 0.00, yaw: 3.1416, hold: 0.1, strict_xy_tolerance: false, xy_tolerance: 0.05}
 ```
 
 正式巡航只配置任务语义目标，不显式写拐角过渡点。
@@ -202,7 +202,7 @@ roslaunch myrobot_navigation autonomous_navigation.launch \
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `map_file` | `myrobot_navigation/maps/raicom_slam_map_final.yaml` | map_server 加载的地图 |
+| `map_file` | `myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml` | map_server 加载的地图 |
 | `launch_rviz` | `true` | 是否打开 RViz |
 | `gui` | `true` | 是否显示 Gazebo GUI |
 | `paused` | `false` | Gazebo 是否暂停启动 |
@@ -288,8 +288,8 @@ myrobot_navigation/config/local_costmap_common_params.yaml
 默认导航使用巡航扫描后保存的地图：
 
 ```text
-src/myrobot_navigation/maps/raicom_slam_map_final.pgm
-src/myrobot_navigation/maps/raicom_slam_map_final.yaml
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 `raicom_known_map.*` 仅作为世界几何参考地图保留，不是默认导航输入。

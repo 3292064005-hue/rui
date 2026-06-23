@@ -40,9 +40,9 @@ rosrun myrobot_task static_workspace_check.py
 
 ## 说明文档
 
-- [仿真说明](README_SIMULATION.md)
-- [SLAM 说明](README_SLAM.md)
-- [导航说明](README_NAVIGATION.md)
-- [任务说明](README_TASK.md)
-- [比赛符合性说明](README_COMPETITION_ALIGNMENT.md)
+- [仿真说明](../myrobot_simulation/README_DETAILS.md)
+- [SLAM 说明](../myrobot_navigation/README_SLAM.md)
+- [导航说明](../myrobot_navigation/README_NAVIGATION.md)
+- [任务说明](../myrobot_task/README_TASK.md)
+- [比赛符合性说明](../myrobot_task/README_COMPETITION_ALIGNMENT.md)
 - [验收清单](ACCEPTANCE_CHECKLIST.md)

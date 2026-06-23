@@ -24,14 +24,14 @@ roslaunch myrobot_navigation slam_mapping.launch
 - `/map/info` 分辨率约 `0.02m`，地图结构完整；
 - 自动建图巡航读取 `slam_navigation_params.yaml`；
 - 默认完整巡航 1 圈；
-- 默认建图节点为 `/odom_laser_mapper`；
+- 默认建图后端为 `slam_toolbox`；
 - 地图无旋转、重影和场外长射线。
 
 最终地图：
 
 ```text
-myrobot_navigation/maps/raicom_slam_map_final.pgm
-myrobot_navigation/maps/raicom_slam_map_final.yaml
+myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 ## 导航

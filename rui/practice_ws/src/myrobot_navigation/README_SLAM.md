@@ -87,7 +87,7 @@ roslaunch myrobot_navigation slam_mapping.launch patrol_repeats:=1
 
 ## 4. 后端切换
 
-默认推荐：
+默认推荐（`slam_toolbox`）：
 
 ```bash
 roslaunch myrobot_navigation slam_mapping.launch
@@ -176,8 +176,8 @@ roslaunch myrobot_navigation save_slam_map.launch \
 仓库中用于导航的验收地图为：
 
 ```text
-src/myrobot_navigation/maps/raicom_slam_map_final.pgm
-src/myrobot_navigation/maps/raicom_slam_map_final.yaml
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.pgm
+src/myrobot_navigation/maps/raicom_slam_map_one_lap_test.yaml
 ```
 
 ---
@@ -222,7 +222,7 @@ rosrun tf tf_echo base_link base_scan
 检查：
 
 ```bash
-rosnode list | grep odom_laser_mapper
+rosnode list | grep slam_toolbox
 rostopic echo /scan_filtered -n 1
 rostopic echo /map -n 1
 ```
@@ -230,9 +230,21 @@ rostopic echo /map -n 1
 如果 `/scan_filtered` 没有数据，优先检查 Gazebo 雷达插件和
 `scan_self_filter.py`。
 
+若使用备用后端 `odom_laser`，则检查：
+
+```bash
+rosnode list | grep odom_laser_mapper
+```
+
 ### 9.2 地图变形或重影
 
-优先调 `slam_mapping.launch` 中 `odom_laser_mapper.py` 的建图参数：
+默认后端 `slam_toolbox` 优先调参数文件：
+
+```text
+myrobot_navigation/config/slam_toolbox_params.yaml
+```
+
+若使用备用后端 `odom_laser`，可调 `slam_mapping.launch` 中 `odom_laser_mapper.py` 的建图参数：
 
 ```xml
 <param name="min_insert_translation" value="0.035" />
@@ -271,6 +283,6 @@ SLAM 功能正常时，应满足：
 1. `/scan_filtered` 有数据；
 2. `/odom` 有数据；
 3. `tf_echo odom base_footprint` 正常；
-4. `rosnode list` 能看到 `/odom_laser_mapper`；
+4. 默认后端 `slam_toolbox` 正常运行（若使用 `odom_laser` 则确认 `/odom_laser_mapper` 存在）；
 5. RViz 中能看到 `/map` 逐渐生成；
 6. `save_slam_map.launch` 能生成 `.pgm` 和 `.yaml` 文件。

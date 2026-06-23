@@ -19,7 +19,7 @@ practice_ws/
     ├── myrobot_navigation/           # 建图、保存地图、AMCL + move_base 导航
     ├── myrobot_recognition/          # YOLO/ONNX 识别节点、权重、模板
     ├── myrobot_task/                 # 巡检任务、证据记录、任务总结
-    └── my_teleop_keyboard/           # 键盘遥控节点
+    └── my_teleop_keyboard/           # 键盘遥控节点（备用）
 ```
 
 ---
@@ -91,12 +91,13 @@ source devel/setup.bash
 |---|---|
 | 只查看模型 | `roslaunch myrobot_simulation 1.launch` |
 | 启动完整 Gazebo 仿真 | `roslaunch myrobot_simulation full_simulation.launch` |
-| 测试底盘、轮子、雷达、相机、IMU | `roslaunch myrobot_simulation test_sim_drivers.launch` |
-| 自动巡点与识别演示 | `roslaunch myrobot_task task_patrol.launch` |
+| 仿真驱动测试（自动发布运动序列） | `roslaunch myrobot_simulation test_sim_drivers.launch` |
+| 正式任务入口（推荐） | `roslaunch myrobot_task task_patrol.launch` |
 | SLAM 建图 | `roslaunch myrobot_navigation slam_mapping.launch` |
 | 保存 SLAM 地图 | `roslaunch myrobot_navigation save_slam_map.launch` |
 | 启动导航栈，手动点目标 | `roslaunch myrobot_navigation navigation.launch` |
-| 一键自主导航任务 | `roslaunch myrobot_navigation autonomous_navigation.launch` |
+| 自主导航+识别+记录 | `roslaunch myrobot_navigation autonomous_navigation.launch` |
+| 旧版简单巡点（兼容） | `roslaunch myrobot_task task_patrol_simple.launch` |
 
 ---
 
@@ -123,6 +124,7 @@ rostopic echo /odom -n 1
 rostopic echo /joint_states -n 1
 rostopic echo /scan -n 1
 rostopic echo /imu/data -n 1
+rostopic echo /camera/image_raw -n 1
 rostopic echo /camera/camera_info -n 1
 rostopic echo /simulation_health
 ```
@@ -151,12 +153,20 @@ roslaunch myrobot_navigation autonomous_navigation.launch
 rostopic echo /navigation_status
 rostopic echo /navigation_health
 rostopic echo /move_base/status
+rostopic echo /recognition_result
+rostopic echo /recognition_summary
 ```
 
 ### 第五步：查看任务结果
 
 ```bash
 rosrun myrobot_task latest_mission_summary.py
+```
+
+如需键盘手动遥控：
+
+```bash
+rosrun my_teleop_keyboard teleop_node.py
 ```
 
 任务日志默认保存在：
@@ -175,7 +185,8 @@ rosrun myrobot_task latest_mission_summary.py
 | `/odom` | 里程计 |
 | `/joint_states` | 轮子关节状态 |
 | `/mecanum_wheel_speeds` | 四个麦克纳姆轮角速度 |
-| `/scan` | 激光雷达数据 |
+| `/scan` | 激光雷达原始数据 |
+| `/scan_filtered` | 自车近场过滤后的激光（建图/导航使用） |
 | `/camera/image_raw` | 相机图像 |
 | `/camera/camera_info` | 相机内参信息 |
 | `/imu/data` | IMU 数据 |
@@ -183,6 +194,7 @@ rosrun myrobot_task latest_mission_summary.py
 | `/amcl_pose` | AMCL 定位结果 |
 | `/move_base/status` | move_base action 状态 |
 | `/navigation_status` | 自主导航任务状态 |
+| `/navigation_health` | 导航链路健康状态 |
 | `/recognition_result` | 单个识别区结果 |
 | `/recognition_summary` | 识别结果汇总 |
 | `/task_trajectory` | 任务轨迹 |
@@ -201,6 +213,7 @@ rosrun myrobot_task latest_mission_summary.py
 | 兵人识别权重 | `src/myrobot_recognition/recognition_weights/` |
 | AMCL 参数 | `src/myrobot_navigation/config/amcl_params.yaml` |
 | move_base 参数 | `src/myrobot_navigation/config/move_base_params.yaml` |
+| TEB 局部规划参数 | `src/myrobot_navigation/config/base_local_planner_params.yaml` |
 | 代价地图参数 | `src/myrobot_navigation/config/*costmap*_params.yaml` |
 | 仿真轮子参数 | `src/myrobot_simulation/config/simulation_params.yaml` |
 | 机器人模型 | `src/myrobot_description/urdf/turtlebot3_mecanum.urdf.xacro` |
@@ -212,9 +225,9 @@ rosrun myrobot_task latest_mission_summary.py
 建议按以下顺序阅读。参数数值以 `config/*.yaml` 和 `launch/*.launch`
 为最终依据，文档中的片段仅用于说明：
 
-1. `src/myrobot_description/README.md`：模型和场景说明；
+1. `src/myrobot_description/README.md`：项目总览与资源索引；
 2. `src/myrobot_simulation/README_DETAILS.md`：仿真驱动和传感器；
 3. `src/myrobot_navigation/README_SLAM.md`：建图流程；
-4. `src/myrobot_navigation/README.md`：自主导航流程；
+4. `src/myrobot_navigation/README_NAVIGATION.md`：自主导航流程；
 5. `src/myrobot_task/README_TASK.md`：任务演示和结果记录；
 6. `REPORT.md`：比赛技术报告、算法说明与验收数据。
